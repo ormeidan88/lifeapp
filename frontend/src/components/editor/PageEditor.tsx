@@ -74,9 +74,9 @@ export function PageEditor({ content, onUpdate }: Props) {
   if (!editor) return null
 
   return (
-    <div className="bg-white rounded-lg border border-[var(--border)] relative">
+    <div className="rounded-xl border border-[var(--border)] relative overflow-hidden" style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-sm)' }}>
       <input ref={fileInput} type="file" accept="image/jpeg,image/png,image/gif,image/webp" className="hidden" onChange={handleImageUpload} />
-      <div className="flex gap-0.5 p-1.5 border-b border-[var(--border)] flex-wrap items-center">
+      <div className="editor-toolbar flex gap-0.5 p-1.5 flex-wrap items-center">
         {/* Text formatting */}
         <div className="flex gap-0.5 pr-2 mr-2 border-r border-[var(--border)]">
           {(['bold', 'italic'] as const).map(mark => (

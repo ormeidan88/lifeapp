@@ -48,9 +48,24 @@ export function ProjectsPage({ onOpen }: { onOpen: (id: string) => void }) {
         {projects.map(p => {
           const s = statusConfig[p.status] || statusConfig.NOT_STARTED
           return (
-            <div key={p.id} onClick={() => onOpen(p.id)}
-              className={`bg-white p-4 rounded-xl border border-[var(--border)] border-l-4 ${s.border} cursor-pointer hover:shadow-md transition-all active:scale-[0.98]`}>
-              <h3 className="font-medium text-[0.95rem] mb-2 leading-snug">{p.name}</h3>
+            <div
+              key={p.id}
+              onClick={() => onOpen(p.id)}
+              className={`p-4 rounded-xl border border-[var(--border)] border-l-4 ${s.border} cursor-pointer transition-all active:scale-[0.98]`}
+              style={{
+                background: 'var(--bg-card)',
+                boxShadow: 'var(--shadow-card)',
+              }}
+              onMouseEnter={e => {
+                ;(e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card-hover)'
+                ;(e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'
+              }}
+              onMouseLeave={e => {
+                ;(e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card)'
+                ;(e.currentTarget as HTMLElement).style.transform = 'translateY(0)'
+              }}
+            >
+              <h3 className="font-medium text-[0.925rem] mb-2.5 leading-snug">{p.name}</h3>
               <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${s.bg} ${s.text}`}>{s.label}</span>
             </div>
           )

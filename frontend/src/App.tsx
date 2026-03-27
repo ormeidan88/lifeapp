@@ -56,8 +56,8 @@ export default function App() {
     <div className="min-h-screen">
       <Sidebar current={page === 'page-detail' ? 'pages' : page} onNavigate={(p) => { setPageId(null); setPage(p) }} onLogout={logout} />
       <BottomNav current={page === 'page-detail' ? 'pages' : page} onNavigate={(p) => { setPageId(null); setPage(p) }} />
-      <main className="md:ml-48 px-6 py-6 pb-24 md:pb-6">
-        <div className="max-w-6xl mx-auto w-full">
+      <main className="md:ml-48 px-6 py-7 pb-24 md:pb-8">
+        <div key={page} className="max-w-6xl mx-auto w-full page-transition">
           {renderPage()}
         </div>
       </main>

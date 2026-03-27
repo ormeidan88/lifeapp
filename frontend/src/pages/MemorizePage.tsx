@@ -110,10 +110,37 @@ export function MemorizePage() {
         <div className="w-full h-1 bg-gray-100 rounded-full mb-4 overflow-hidden">
           <div className="h-full bg-[var(--accent-sage)] rounded-full transition-all duration-300" style={{ width: `${((cardIdx + 1) / cards.length) * 100}%` }} />
         </div>
-        <div className="bg-white p-8 rounded-2xl border border-[var(--border)] min-h-[220px] flex items-center justify-center cursor-pointer shadow-sm hover:shadow-md transition-shadow"
-          onClick={() => setFlipped(!flipped)}>
-          <div className="w-full" style={{ transition: 'opacity 0.15s', opacity: 1 }}>
-            <MiniEditor content={parseCardContent(flipped ? card.back : card.front)} editable={false} minHeight="120px" />
+        {/* 3-D flip card */}
+        <div
+          className="card-flip-container w-full"
+          style={{ minHeight: '240px' }}
+          onClick={() => setFlipped(!flipped)}
+        >
+          <div className={`card-flip-inner w-full ${flipped ? 'is-flipped' : ''}`} style={{ minHeight: '240px' }}>
+            {/* Front face */}
+            <div
+              className="card-flip-face bg-white border p-8"
+              style={{ borderColor: 'var(--border)', boxShadow: 'var(--shadow-sm)' }}
+            >
+              <div className="w-full">
+                <p className="text-[10px] uppercase tracking-widest mb-4 font-medium" style={{ color: 'var(--text-faint)' }}>Question</p>
+                <MiniEditor content={parseCardContent(card.front)} editable={false} minHeight="100px" />
+              </div>
+            </div>
+            {/* Back face */}
+            <div
+              className="card-flip-back p-8"
+              style={{
+                background: 'var(--bg-surface)',
+                border: '2px solid var(--accent-sage)',
+                boxShadow: '0 4px 20px rgba(126, 155, 106, 0.20)',
+              }}
+            >
+              <div className="w-full">
+                <p className="text-[10px] uppercase tracking-widest mb-4 font-medium" style={{ color: 'var(--accent-sage)' }}>Answer</p>
+                <MiniEditor content={parseCardContent(card.back)} editable={false} minHeight="100px" />
+              </div>
+            </div>
           </div>
         </div>
         {flipped ? (
@@ -129,7 +156,9 @@ export function MemorizePage() {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-[var(--text-muted)] mt-4">Click card to reveal answer</p>
+          <p className="text-[11px] mt-5 tracking-wide" style={{ color: 'var(--text-faint)' }}>
+            tap to reveal
+          </p>
         )}
       </div>
     )
@@ -201,7 +230,19 @@ export function MemorizePage() {
       {loading && decks.length === 0 && <p className="text-[var(--text-muted)] text-center py-12">Loading...</p>}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {decks.map(d => (
-          <div key={d.id} className="bg-white p-4 rounded-xl border border-[var(--border)] group">
+          <div
+            key={d.id}
+            className="p-5 rounded-xl border border-[var(--border)] group transition-all"
+            style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)' }}
+            onMouseEnter={e => {
+              ;(e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card-hover)'
+              ;(e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)'
+            }}
+            onMouseLeave={e => {
+              ;(e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card)'
+              ;(e.currentTarget as HTMLElement).style.transform = 'translateY(0)'
+            }}
+          >
             <div className="flex items-center justify-between mb-2">
               <h3 className="font-medium">{d.name}</h3>
               <button onClick={() => deleteDeck(d.id)}

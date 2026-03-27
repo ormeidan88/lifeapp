@@ -68,11 +68,11 @@ export function HabitsPage() {
     load()
   }
 
-  const cellColor = (value?: string) => {
-    if (value === 'YES') return 'bg-[var(--accent-sage)] text-white'
-    if (value === 'NO') return 'bg-[var(--danger)] text-white'
-    if (value === 'SKIP') return 'bg-[var(--border)] text-[var(--text-muted)]'
-    return 'bg-gray-100 text-[var(--text-muted)]'
+  const cellStateClass = (value?: string) => {
+    if (value === 'YES') return 'is-done'
+    if (value === 'NO') return 'is-missed'
+    if (value === 'SKIP') return 'is-skipped'
+    return ''
   }
 
   const cellLabel = (value?: string) => {
@@ -101,16 +101,25 @@ export function HabitsPage() {
       )}
 
       {/* Legend */}
-      <div className="flex gap-4 mb-4 text-[10px] text-[var(--text-muted)]">
-        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-[var(--accent-sage)] inline-block" /> Done</span>
-        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-[var(--danger)] inline-block" /> Missed</span>
-        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded bg-[var(--border)] inline-block" /> Skipped</span>
+      <div className="flex gap-5 mb-5 text-[11px]" style={{ color: 'var(--text-muted)' }}>
+        <span className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: 'var(--accent-sage)' }} />
+          Done
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ background: 'var(--danger)' }} />
+          Missed
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-2.5 h-2.5 rounded-full inline-block border" style={{ background: 'var(--bg-surface)', borderColor: 'var(--border)' }} />
+          Skipped
+        </span>
       </div>
 
       {loading && habits.length === 0 && <p className="text-[var(--text-muted)] text-center py-12">Loading...</p>}
 
       {habits.length > 0 && (
-        <div className="bg-white rounded-xl border border-[var(--border)] overflow-hidden">
+        <div className="rounded-xl border border-[var(--border)] overflow-hidden" style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-sm)' }}>
           {/* Day headers with navigation */}
           <div className="flex items-center border-b border-[var(--border)]">
             <div className="w-48 flex-shrink-0 px-4 py-2">
@@ -154,9 +163,11 @@ export function HabitsPage() {
                   const isToday = d === todayStr
                   return (
                     <div key={d} className={`flex-1 flex items-center justify-center py-3 ${isToday ? 'bg-[var(--accent-sage-light)]' : ''}`}>
-                      <button onClick={() => toggle(h.id, d)}
+                      <button
+                        onClick={() => toggle(h.id, d)}
                         title={`${d}: ${val || 'none'} (click to cycle)`}
-                        className={`w-9 h-9 rounded-lg flex items-center justify-center text-sm font-medium transition-all hover:scale-110 ${cellColor(val)}`}>
+                        className={`habit-cell ${cellStateClass(val)}`}
+                      >
                         {cellLabel(val)}
                       </button>
                     </div>

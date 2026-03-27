@@ -55,12 +55,19 @@ export function InboxPage() {
       <form onSubmit={add} className="mb-6">
         <input ref={inputRef} value={text} onChange={e => setText(e.target.value)}
           placeholder="What's on your mind?" autoFocus
-          className="w-full px-4 py-3.5 bg-white border border-[var(--border)] rounded-xl outline-none text-base shadow-sm" />
+          className="w-full px-4 py-3.5 border border-[var(--border)] rounded-xl outline-none text-base"
+          style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-xs)' }} />
       </form>
       {loading && items.length === 0 && <p className="text-[var(--text-muted)] text-center py-8">Loading...</p>}
       <div className="space-y-2">
         {items.map(item => (
-          <div key={item.id} className="flex items-center bg-white px-4 py-3 rounded-xl border border-[var(--border)] group hover:shadow-sm transition-shadow">
+          <div
+            key={item.id}
+            className="flex items-center px-4 py-3 rounded-xl border border-[var(--border)] group transition-all"
+            style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-xs)' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-sm)' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-xs)' }}
+          >
             <div className="flex-1 min-w-0">
               <p className="text-[0.95rem]">{item.text}</p>
               <p className="text-[10px] text-[var(--text-muted)] mt-0.5">{timeAgo(item.createdAt)}</p>
