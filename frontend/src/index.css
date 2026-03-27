@@ -1,0 +1,100 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #FAF7F2;
+  --bg-card: #FFFFFF;
+  --text: #3D3D3D;
+  --text-muted: #8A8A8A;
+  --border: #E8E4DE;
+  --accent-sage: #8B9E7C;
+  --accent-sage-light: #8B9E7C26;
+  --accent-terracotta: #C4836A;
+  --accent-blue: #7B9EB2;
+  --accent-blue-light: #7B9EB233;
+  --accent-sand: #D4C5A9;
+  --danger: #C47070;
+  --danger-light: #C4707020;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Focus styles for accessibility */
+input:focus, select:focus, button:focus-visible {
+  outline: 2px solid var(--accent-sage);
+  outline-offset: 1px;
+}
+input:focus { outline: none; box-shadow: 0 0 0 2px var(--accent-sage-light); border-color: var(--accent-sage) !important; }
+
+/* Button press feedback */
+button { transition: transform 0.1s, opacity 0.1s; }
+button:active:not(:disabled) { transform: scale(0.97); }
+
+/* Custom checkbox */
+input[type="checkbox"] {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+}
+input[type="checkbox"]:checked {
+  background: var(--accent-sage);
+  border-color: var(--accent-sage);
+}
+input[type="checkbox"]:checked::after {
+  content: '✓';
+  color: white;
+  font-size: 12px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* TipTap editor styles */
+.tiptap {
+  outline: none;
+  min-height: 200px;
+  padding: 1rem 1.25rem;
+  font-size: 0.95rem;
+}
+.tiptap h1 { font-size: 1.75rem; font-weight: 600; margin: 1.5rem 0 0.5rem; color: var(--text); }
+.tiptap h2 { font-size: 1.375rem; font-weight: 600; margin: 1.25rem 0 0.5rem; color: var(--text); }
+.tiptap h3 { font-size: 1.125rem; font-weight: 600; margin: 1rem 0 0.5rem; color: var(--text); }
+.tiptap p { margin: 0.5rem 0; }
+.tiptap ul, .tiptap ol { padding-left: 1.5rem; margin: 0.5rem 0; }
+.tiptap ul { list-style-type: disc; }
+.tiptap ol { list-style-type: decimal; }
+.tiptap ul ul { list-style-type: circle; }
+.tiptap ul ul ul { list-style-type: square; }
+.tiptap li { margin: 0.15rem 0; }
+.tiptap ul[data-type="taskList"] { list-style: none; padding-left: 0; }
+.tiptap ul[data-type="taskList"] li { display: flex; align-items: flex-start; gap: 0.5rem; }
+.tiptap ul[data-type="taskList"] li label { margin-top: 2px; }
+.tiptap table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+.tiptap th, .tiptap td { border: 1px solid var(--border); padding: 0.5rem 0.75rem; text-align: left; }
+.tiptap th { background: var(--bg); font-weight: 500; }
+.tiptap code { background: #F0EDE8; padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.875em; font-family: 'SF Mono', 'Fira Code', monospace; }
+.tiptap pre { background: #1E1E2E; color: #CDD6F4; padding: 1rem 1.25rem; border-radius: 8px; overflow-x: auto; margin: 0.75rem 0; }
+.tiptap pre code { background: none; padding: 0; color: inherit; font-size: 0.875rem; }
+.tiptap img { max-width: 100%; border-radius: 8px; margin: 0.75rem 0; }
+.tiptap a { color: var(--accent-blue); text-decoration: underline; text-underline-offset: 2px; }
+.tiptap blockquote { border-left: 3px solid var(--accent-sage); padding-left: 1rem; color: var(--text-muted); margin: 0.75rem 0; font-style: italic; }
+.tiptap hr { border: none; border-top: 2px solid var(--border); margin: 1.5rem 0; }
+.tiptap .is-empty::before { content: attr(data-placeholder); color: var(--text-muted); pointer-events: none; float: left; height: 0; }
