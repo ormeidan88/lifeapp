@@ -10,6 +10,7 @@ export function ListsPage() {
   const [loading, setLoading] = useState(true)
   const [newTask, setNewTask] = useState('')
   const [projects, setProjects] = useState<any[]>([])
+  const [movingTaskId, setMovingTaskId] = useState<string | null>(null)
 
   // Waiting For state
   const [wfItems, setWfItems] = useState<any[]>([])
@@ -37,6 +38,7 @@ export function ListsPage() {
 
   const openList = async (list: any) => {
     setSelectedList(list)
+    setMovingTaskId(null)
     if (list.name === 'Waiting For') {
       const d = await api.waitingFor.list()
       setWfItems(d.items)
@@ -64,6 +66,7 @@ export function ListsPage() {
     if (!selectedList) return
     await api.lists.removeItem(selectedList.id, taskId)
     openList(selectedList)
+    load()
   }
 
   const addTaskToList = async (e: React.FormEvent) => {
@@ -78,11 +81,28 @@ export function ListsPage() {
     await api.lists.addItem(selectedList.id, task.id)
     setNewTask('')
     openList(selectedList)
+    load()
   }
 
   const toggleTask = async (task: any) => {
     await api.tasks.update(task.id, { projectId: task.projectId, done: !task.done })
     openList(selectedList)
+  }
+
+  const moveToInbox = async (taskTitle: string, taskId: string) => {
+    await api.inbox.create(taskTitle)
+    await api.lists.removeItem(selectedList.id, taskId)
+    setMovingTaskId(null)
+    openList(selectedList)
+    load()
+  }
+
+  const moveToList = async (targetListId: string, taskId: string) => {
+    await api.lists.addItem(targetListId, taskId)
+    await api.lists.removeItem(selectedList.id, taskId)
+    setMovingTaskId(null)
+    openList(selectedList)
+    load()
   }
 
   // Waiting For actions
@@ -111,6 +131,8 @@ export function ListsPage() {
     openList(selectedList)
     load()
   }
+
+  const otherLists = lists.filter(l => l.id !== selectedList?.id && l.name !== 'Waiting For')
 
   return (
     <div className="flex gap-6 min-h-[60vh]">
@@ -228,7 +250,7 @@ export function ListsPage() {
               </form>
               <div className="space-y-1">
                 {items.map(item => (
-                  <div key={item.taskId} className="flex items-center gap-3 bg-white px-4 py-2.5 rounded-xl border border-[var(--border)] group">
+                  <div key={item.taskId} className="relative flex items-center gap-3 bg-white px-4 py-2.5 rounded-xl border border-[var(--border)] group">
                     {item.task ? (
                       <>
                         <input type="checkbox" checked={item.task.done} onChange={() => toggleTask(item.task)} />
@@ -239,8 +261,32 @@ export function ListsPage() {
                     ) : (
                       <span className="flex-1 text-sm text-[var(--text-muted)]">Task not found</span>
                     )}
-                    <button onClick={() => removeItem(item.taskId)}
-                      className="text-[var(--text-muted)] hover:text-[var(--danger)] text-xs opacity-0 group-hover:opacity-100">Remove</button>
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {item.task && (
+                        <button onClick={() => setMovingTaskId(movingTaskId === item.taskId ? null : item.taskId)}
+                          className="text-[10px] px-2 py-1 rounded-md bg-[var(--accent-sage-light)] text-[var(--accent-sage)] hover:bg-[var(--accent-sage)] hover:text-white transition-colors">
+                          Move →
+                        </button>
+                      )}
+                      <button onClick={() => removeItem(item.taskId)}
+                        className="text-[var(--text-muted)] hover:text-[var(--danger)] text-xs">✕</button>
+                    </div>
+
+                    {/* Move dropdown */}
+                    {movingTaskId === item.taskId && item.task && (
+                      <div className="absolute right-0 top-full mt-1 z-10 bg-white border border-[var(--border)] rounded-lg shadow-lg py-1 min-w-[160px]">
+                        <button onClick={() => moveToInbox(item.task.title, item.taskId)}
+                          className="w-full text-left px-3 py-1.5 text-sm hover:bg-[var(--bg)] transition-colors">
+                          📥 Inbox
+                        </button>
+                        {otherLists.map(l => (
+                          <button key={l.id} onClick={() => moveToList(l.id, item.taskId)}
+                            className="w-full text-left px-3 py-1.5 text-sm hover:bg-[var(--bg)] transition-colors">
+                            {l.type === 'SYSTEM' ? (l.name === 'Today' ? '☀️' : '💭') : '📌'} {l.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
                 {items.length === 0 && (
