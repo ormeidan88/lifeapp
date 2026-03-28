@@ -11,6 +11,15 @@ export function ListsPage() {
   const [newTask, setNewTask] = useState('')
   const [projects, setProjects] = useState<any[]>([])
 
+  // Waiting For state
+  const [wfItems, setWfItems] = useState<any[]>([])
+  const [wfAdding, setWfAdding] = useState(false)
+  const [wfDesc, setWfDesc] = useState('')
+  const [wfPerson, setWfPerson] = useState('')
+  const [wfDate, setWfDate] = useState('')
+
+  const isWaitingFor = selectedList?.name === 'Waiting For'
+
   useEffect(() => {
     load()
     api.projects.list().then(d => setProjects(d.projects))
@@ -21,7 +30,6 @@ export function ListsPage() {
     const d = await api.lists.list()
     setLists(d.lists)
     setLoading(false)
-    // Auto-select first list if none selected
     if (!selectedList && d.lists.length > 0) {
       openList(d.lists[0])
     }
@@ -29,8 +37,13 @@ export function ListsPage() {
 
   const openList = async (list: any) => {
     setSelectedList(list)
-    const d = await api.lists.getItems(list.id)
-    setItems(d.items || [])
+    if (list.name === 'Waiting For') {
+      const d = await api.waitingFor.list()
+      setWfItems(d.items)
+    } else {
+      const d = await api.lists.getItems(list.id)
+      setItems(d.items || [])
+    }
   }
 
   const addList = async (e: React.FormEvent) => {
@@ -56,7 +69,6 @@ export function ListsPage() {
   const addTaskToList = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newTask.trim() || !selectedList) return
-    // Need a project to hold the task — use first active or first available
     const project = projects.find(p => p.status === 'IN_PROGRESS') || projects[0]
     if (!project) {
       alert('Create a project first — tasks need to belong to a project.')
@@ -71,6 +83,33 @@ export function ListsPage() {
   const toggleTask = async (task: any) => {
     await api.tasks.update(task.id, { projectId: task.projectId, done: !task.done })
     openList(selectedList)
+  }
+
+  // Waiting For actions
+  const addWfItem = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!wfDesc.trim() || !wfPerson.trim() || !wfDate) return
+    try {
+      await api.waitingFor.create(wfDesc.trim(), wfPerson.trim(), wfDate)
+      setWfDesc(''); setWfPerson(''); setWfDate(''); setWfAdding(false)
+      openList(selectedList)
+      load()
+    } catch (err: any) {
+      alert(err.message || 'Failed to add item')
+    }
+  }
+
+  const acknowledgeWf = async (id: string) => {
+    await api.waitingFor.acknowledge(id)
+    openList(selectedList)
+    load()
+  }
+
+  const deleteWf = async (id: string) => {
+    if (!confirm('Delete this item?')) return
+    await api.waitingFor.delete(id)
+    openList(selectedList)
+    load()
   }
 
   return (
@@ -96,8 +135,11 @@ export function ListsPage() {
               className={`flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer group text-sm transition-colors
                 ${selectedList?.id === l.id ? 'bg-[var(--accent-sage-light)] text-[var(--text)]' : 'hover:bg-[var(--bg)] text-[var(--text-muted)]'}`}>
               <div className="flex items-center gap-2 min-w-0">
-                <span>{l.type === 'SYSTEM' ? (l.name === 'Today' ? '☀️' : '💭') : '📌'}</span>
+                <span>{l.type === 'SYSTEM' ? (l.name === 'Today' ? '☀️' : l.name === 'Waiting For' ? '⏳' : '💭') : '📌'}</span>
                 <span className="truncate">{l.name}</span>
+                {l.name === 'Waiting For' && l.overdueCount > 0 && (
+                  <span className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0" />
+                )}
               </div>
               <div className="flex items-center gap-1">
                 <span className="text-[10px] text-[var(--text-muted)]">{l.itemCount}</span>
@@ -114,41 +156,102 @@ export function ListsPage() {
       {/* List content */}
       <div className="flex-1 min-w-0">
         {selectedList ? (
-          <>
-            <div className="flex items-center gap-2 mb-4">
-              <h2 className="text-xl font-semibold">{selectedList.name}</h2>
-              <span className="text-xs text-[var(--text-muted)]">{items.length} items</span>
-            </div>
-            <form onSubmit={addTaskToList} className="mb-4">
-              <input value={newTask} onChange={e => setNewTask(e.target.value)}
-                placeholder="Add a task to this list..."
-                className="w-full px-3 py-2 border border-[var(--border)] rounded-lg outline-none text-sm" />
-            </form>
-            <div className="space-y-1">
-              {items.map(item => (
-                <div key={item.taskId} className="flex items-center gap-3 bg-white px-4 py-2.5 rounded-xl border border-[var(--border)] group">
-                  {item.task ? (
-                    <>
-                      <input type="checkbox" checked={item.task.done} onChange={() => toggleTask(item.task)} />
-                      <span className={`flex-1 text-sm ${item.task.done ? 'line-through text-[var(--text-muted)]' : ''}`}>
-                        {item.task.title}
-                      </span>
-                    </>
-                  ) : (
-                    <span className="flex-1 text-sm text-[var(--text-muted)]">Task not found</span>
-                  )}
-                  <button onClick={() => removeItem(item.taskId)}
-                    className="text-[var(--text-muted)] hover:text-[var(--danger)] text-xs opacity-0 group-hover:opacity-100">Remove</button>
+          isWaitingFor ? (
+            /* ── Waiting For view ── */
+            <>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xl font-semibold">Waiting For</h2>
+                  <span className="text-xs text-[var(--text-muted)]">{wfItems.length} items</span>
                 </div>
-              ))}
-              {items.length === 0 && (
-                <div className="text-center py-12">
-                  <p className="text-[var(--text-muted)] text-sm">This list is empty</p>
-                  <p className="text-xs text-[var(--text-muted)] mt-1">Move items here from the Inbox</p>
-                </div>
+                <button onClick={() => setWfAdding(!wfAdding)} className="text-sm text-[var(--accent-sage)] hover:underline">
+                  {wfAdding ? 'Cancel' : '+ New'}
+                </button>
+              </div>
+              {wfAdding && (
+                <form onSubmit={addWfItem} className="mb-4 bg-white border border-[var(--border)] rounded-xl p-4 space-y-3">
+                  <input value={wfDesc} onChange={e => setWfDesc(e.target.value)} placeholder="What are you waiting for?"
+                    className="w-full px-3 py-2 border border-[var(--border)] rounded-lg outline-none text-sm" autoFocus />
+                  <div className="flex gap-3">
+                    <input value={wfPerson} onChange={e => setWfPerson(e.target.value)} placeholder="From whom?"
+                      className="flex-1 px-3 py-2 border border-[var(--border)] rounded-lg outline-none text-sm" />
+                    <input type="date" value={wfDate} onChange={e => setWfDate(e.target.value)}
+                      className="px-3 py-2 border border-[var(--border)] rounded-lg outline-none text-sm" />
+                  </div>
+                  <button type="submit" className="px-4 py-2 bg-[var(--accent-sage)] text-white rounded-lg text-sm hover:opacity-90">Add</button>
+                </form>
               )}
-            </div>
-          </>
+              <div className="space-y-1">
+                {wfItems.map(item => (
+                  <div key={item.id} className="flex items-center gap-3 bg-white px-4 py-3 rounded-xl border border-[var(--border)] group">
+                    {item.overdue && (
+                      <span className="w-2.5 h-2.5 rounded-full bg-red-500 flex-shrink-0" title="Overdue" />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm">{item.description}</div>
+                      <div className="text-xs text-[var(--text-muted)] mt-0.5">
+                        From <span className="font-medium">{item.waitingFor}</span> · Due {item.dueDate}
+                        {item.acknowledged && <span className="ml-1 text-[var(--accent-sage)]">✓ acknowledged</span>}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {item.overdue && (
+                        <button onClick={() => acknowledgeWf(item.id)}
+                          className="text-xs px-2 py-1 rounded bg-[var(--accent-sage-light)] text-[var(--accent-sage)] hover:opacity-80">
+                          Acknowledge
+                        </button>
+                      )}
+                      <button onClick={() => deleteWf(item.id)}
+                        className="text-[var(--text-muted)] hover:text-[var(--danger)] text-xs opacity-0 group-hover:opacity-100">✕</button>
+                    </div>
+                  </div>
+                ))}
+                {wfItems.length === 0 && (
+                  <div className="text-center py-12">
+                    <p className="text-[var(--text-muted)] text-sm">Nothing waiting</p>
+                    <p className="text-xs text-[var(--text-muted)] mt-1">Add items you're waiting on from others</p>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            /* ── Regular list view ── */
+            <>
+              <div className="flex items-center gap-2 mb-4">
+                <h2 className="text-xl font-semibold">{selectedList.name}</h2>
+                <span className="text-xs text-[var(--text-muted)]">{items.length} items</span>
+              </div>
+              <form onSubmit={addTaskToList} className="mb-4">
+                <input value={newTask} onChange={e => setNewTask(e.target.value)}
+                  placeholder="Add a task to this list..."
+                  className="w-full px-3 py-2 border border-[var(--border)] rounded-lg outline-none text-sm" />
+              </form>
+              <div className="space-y-1">
+                {items.map(item => (
+                  <div key={item.taskId} className="flex items-center gap-3 bg-white px-4 py-2.5 rounded-xl border border-[var(--border)] group">
+                    {item.task ? (
+                      <>
+                        <input type="checkbox" checked={item.task.done} onChange={() => toggleTask(item.task)} />
+                        <span className={`flex-1 text-sm ${item.task.done ? 'line-through text-[var(--text-muted)]' : ''}`}>
+                          {item.task.title}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="flex-1 text-sm text-[var(--text-muted)]">Task not found</span>
+                    )}
+                    <button onClick={() => removeItem(item.taskId)}
+                      className="text-[var(--text-muted)] hover:text-[var(--danger)] text-xs opacity-0 group-hover:opacity-100">Remove</button>
+                  </div>
+                ))}
+                {items.length === 0 && (
+                  <div className="text-center py-12">
+                    <p className="text-[var(--text-muted)] text-sm">This list is empty</p>
+                    <p className="text-xs text-[var(--text-muted)] mt-1">Move items here from the Inbox</p>
+                  </div>
+                )}
+              </div>
+            </>
+          )
         ) : (
           <div className="text-center py-16">
             <div className="text-4xl mb-3">📌</div>

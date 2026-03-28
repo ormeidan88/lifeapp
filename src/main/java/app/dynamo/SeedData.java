@@ -44,6 +44,7 @@ public class SeedData {
     @Inject @Named("cards") DynamoDbTable<Card> cardsTable;
     @Inject @Named("books") DynamoDbTable<Book> booksTable;
     @Inject @Named("calendarEvents") DynamoDbTable<CalendarEvent> calendarTable;
+    @Inject @Named("waitingForItems") DynamoDbTable<WaitingForItem> waitingForTable;
 
     @PostConstruct
     void init() {
@@ -64,6 +65,7 @@ public class SeedData {
         seedDecks();
         seedBooks();
         seedCalendar();
+        seedWaitingFor();
         LOG.info("Dev mode: seed data loaded.");
     }
 
@@ -225,6 +227,24 @@ public class SeedData {
             event.setTitle(ev[3]); event.setDate(date); event.setStartTime(ev[1]); event.setEndTime(ev[2]);
             event.setSource(ev[4]); event.setColor(colors[rng.nextInt(colors.length)]); event.setCreatedAt(now());
             calendarTable.putItem(event);
+        }
+    }
+
+    private void seedWaitingFor() {
+        LocalDate today = LocalDate.now();
+        String[][] items = {
+                {"Waiting for contract review", "Sarah", today.minusDays(3).toString(), "false"},
+                {"Waiting for design mockups", "Mike", today.minusDays(1).toString(), "false"},
+                {"Waiting for invoice payment", "Acme Corp", today.plusDays(5).toString(), "false"},
+                {"Waiting for book recommendation list", "Emma", today.minusDays(7).toString(), "true"},
+        };
+        for (String[] d : items) {
+            var item = new WaitingForItem();
+            item.setUserId(USER); item.setItemId(ulid());
+            item.setDescription(d[0]); item.setWaitingFor(d[1]);
+            item.setDueDate(d[2]); item.setAcknowledged(Boolean.parseBoolean(d[3]));
+            item.setCreatedAt(now());
+            waitingForTable.putItem(item);
         }
     }
 

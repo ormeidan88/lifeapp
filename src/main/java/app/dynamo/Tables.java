@@ -56,4 +56,7 @@ public class Tables {
 
     @Produces @Named("calendarEvents")
     DynamoDbTable<CalendarEvent> calendarEvents() { return enhanced.table("calendar_events", TableSchema.fromBean(CalendarEvent.class)); }
+
+    @Produces @Named("waitingForItems")
+    DynamoDbTable<WaitingForItem> waitingForItems() { return enhanced.table("waiting_for_items", TableSchema.fromBean(WaitingForItem.class)); }
 }

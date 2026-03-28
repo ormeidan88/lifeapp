@@ -3,6 +3,7 @@ package app.resource;
 import app.model.ListEntity;
 import app.model.ListItem;
 import app.model.Task;
+import app.model.WaitingForItem;
 import com.github.f4b6a3.ulid.UlidCreator;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -14,6 +15,7 @@ import software.amazon.awssdk.enhanced.dynamodb.Key;
 import software.amazon.awssdk.enhanced.dynamodb.model.QueryConditional;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.*;
 
 @Path("/api/lists")
@@ -26,6 +28,7 @@ public class ListResource {
     @Inject @Named("lists") DynamoDbTable<ListEntity> table;
     @Inject @Named("listItems") DynamoDbTable<ListItem> itemsTable;
     @Inject @Named("tasks") DynamoDbTable<Task> tasksTable;
+    @Inject @Named("waitingForItems") DynamoDbTable<WaitingForItem> waitingForTable;
 
     private void ensureSystemLists() {
         var existing = table.query(QueryConditional.keyEqualTo(Key.builder().partitionValue(USER).build()))
@@ -33,6 +36,7 @@ public class ListResource {
         String now = Instant.now().toString();
         if (!existing.contains("Today")) createSystemList("Today", now);
         if (!existing.contains("Someday")) createSystemList("Someday", now);
+        if (!existing.contains("Waiting For")) createSystemList("Waiting For", now);
     }
 
     private void createSystemList(String name, String now) {
@@ -48,11 +52,26 @@ public class ListResource {
     @GET
     public Response list() {
         ensureSystemLists();
+        String today = LocalDate.now().toString();
+        var waitingForItems = waitingForTable.query(QueryConditional.keyEqualTo(Key.builder().partitionValue(USER).build()))
+                .items().stream().toList();
+        long overdueCount = waitingForItems.stream()
+                .filter(i -> i.getDueDate() != null && i.getDueDate().compareTo(today) <= 0 && !Boolean.TRUE.equals(i.getAcknowledged()))
+                .count();
         var lists = table.query(QueryConditional.keyEqualTo(Key.builder().partitionValue(USER).build()))
                 .items().stream().map(l -> {
-                    long count = itemsTable.query(QueryConditional.keyEqualTo(Key.builder().partitionValue(l.getListId()).build()))
-                            .items().stream().count();
-                    return Map.of("id", l.getListId(), "name", l.getName(), "type", l.getType(), "itemCount", count, "createdAt", l.getCreatedAt());
+                    var m = new HashMap<String, Object>();
+                    m.put("id", l.getListId()); m.put("name", l.getName());
+                    m.put("type", l.getType()); m.put("createdAt", l.getCreatedAt());
+                    if ("Waiting For".equals(l.getName())) {
+                        m.put("itemCount", (long) waitingForItems.size());
+                        m.put("overdueCount", overdueCount);
+                    } else {
+                        long count = itemsTable.query(QueryConditional.keyEqualTo(Key.builder().partitionValue(l.getListId()).build()))
+                                .items().stream().count();
+                        m.put("itemCount", count);
+                    }
+                    return m;
                 }).toList();
         return Response.ok(Map.of("lists", lists)).build();
     }

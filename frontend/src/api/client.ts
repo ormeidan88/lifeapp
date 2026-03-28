@@ -110,4 +110,11 @@ export const api = {
       return res.json()
     },
   },
+  waitingFor: {
+    list: () => request('/waiting-for'),
+    create: (description: string, waitingFor: string, dueDate: string) => request('/waiting-for', { method: 'POST', body: JSON.stringify({ description, waitingFor, dueDate }) }),
+    delete: (id: string) => request(`/waiting-for/${id}`, { method: 'DELETE' }),
+    acknowledge: (id: string) => request(`/waiting-for/${id}/acknowledge`, { method: 'POST' }),
+    overdueCount: () => request('/waiting-for/overdue-count'),
+  },
 }

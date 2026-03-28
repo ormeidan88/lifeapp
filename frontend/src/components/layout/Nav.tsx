@@ -81,10 +81,10 @@ const labels: Record<string, string> = {
 
 const items = ['inbox', 'projects', 'lists', 'pages', 'habits', 'memorize', 'books', 'calendar']
 
-type Props = { current: string; onNavigate: (page: string) => void; onLogout: () => void }
+type Props = { current: string; onNavigate: (page: string) => void; onLogout?: () => void }
 
 // ── Sidebar (desktop) ────────────────────────────────────────────────────
-export function Sidebar({ current, onNavigate, onLogout }: Props) {
+export function Sidebar({ current, onNavigate, onLogout, overdueCount }: Props) {
   return (
     <nav className="sidebar-nav hidden md:flex flex-col w-48 h-screen fixed left-0 top-0 justify-between py-5">
       {/* Logo */}
@@ -154,7 +154,7 @@ export function Sidebar({ current, onNavigate, onLogout }: Props) {
 }
 
 // ── Bottom nav (mobile) ──────────────────────────────────────────────────
-export function BottomNav({ current, onNavigate }: Omit<Props, 'onLogout'>) {
+export function BottomNav({ current, onNavigate }: Props) {
   return (
     <nav
       className="bottom-nav-glass md:hidden fixed bottom-0 left-0 right-0 flex justify-around py-2 z-50"
