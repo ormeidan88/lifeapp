@@ -48,8 +48,9 @@ public class SeedData {
     @PostConstruct
     void init() {
         if (!devMode) return;
-        // Check if already seeded
-        if (inboxTable.query(QueryConditional.keyEqualTo(Key.builder().partitionValue(USER).build())).items().stream().findAny().isPresent()) {
+        tableInitializer.ready(); // ensures TableInitializer @PostConstruct has run before we query any table
+        // Check if already seeded — use habits table as the guard (never auto-cleared by user actions)
+        if (habitsTable.query(QueryConditional.keyEqualTo(Key.builder().partitionValue(USER).build())).items().stream().findAny().isPresent()) {
             LOG.info("Dev mode: seed data already exists, skipping.");
             return;
         }

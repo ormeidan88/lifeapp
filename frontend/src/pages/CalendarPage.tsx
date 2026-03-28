@@ -45,11 +45,61 @@ export function CalendarPage() {
   // The "selected date" for the side panel — today in weekly view, the viewed day in daily view
   const selectedDate = view === 'daily' ? getDayDate(dayOffset) : new Date().toISOString().slice(0, 10)
 
-  useEffect(() => { load() }, [weekOffset, dayOffset, view])
-  useEffect(() => { loadTodayTasks(); loadHabits() }, [selectedDate])
-  const load = async () => { try { const d = await api.calendar.list(from, to); setEvents(d.events || []) } catch { setEvents([]) } }
+  useEffect(() => {
+    let ignore = false
+    const run = async () => {
+      try {
+        const d = await api.calendar.list(from, to)
+        if (!ignore) setEvents(d.events || [])
+      } catch {
+        if (!ignore) setEvents([])
+      }
+    }
+    run()
+    return () => { ignore = true }
+  }, [weekOffset, dayOffset, view])
 
-  const loadTodayTasks = async () => {
+  useEffect(() => {
+    let ignore = false
+    const run = async () => {
+      try {
+        // Tasks
+        const lists = await api.lists.list()
+        if (ignore) return
+        const today = lists.lists?.find((l: any) => l.name === 'Today')
+        if (today) {
+          setTodayListId(today.id)
+          const items = await api.lists.getItems(today.id)
+          if (ignore) return
+          setTodayTasks(items.items || [])
+        }
+
+        // Habits
+        const d = await api.habits.list()
+        if (ignore) return
+        setHabits(d.habits || [])
+        const ent: Record<string, string> = {}
+        for (const h of d.habits || []) {
+          if (ignore) break
+          try {
+            const e = await api.habits.getEntries(h.id, selectedDate, selectedDate)
+            if (!ignore && e.entries?.length > 0) ent[h.id] = e.entries[0].value
+          } catch { /* skip individual habit errors */ }
+        }
+        if (!ignore) setHabitEntries(ent)
+      } catch {
+        if (!ignore) { setTodayTasks([]); setHabits([]); setHabitEntries({}) }
+      }
+    }
+    run()
+    return () => { ignore = true }
+  }, [selectedDate])
+
+  const reloadEvents = async () => {
+    try { const d = await api.calendar.list(from, to); setEvents(d.events || []) } catch { setEvents([]) }
+  }
+
+  const reloadTasks = async () => {
     try {
       const lists = await api.lists.list()
       const today = lists.lists?.find((l: any) => l.name === 'Today')
@@ -63,22 +113,7 @@ export function CalendarPage() {
 
   const toggleTodayTask = async (task: any) => {
     await api.tasks.update(task.id, { projectId: task.projectId, done: !task.done })
-    loadTodayTasks()
-  }
-
-  const loadHabits = async () => {
-    try {
-      const d = await api.habits.list()
-      setHabits(d.habits || [])
-      const ent: Record<string, string> = {}
-      for (const h of d.habits || []) {
-        try {
-          const e = await api.habits.getEntries(h.id, selectedDate, selectedDate)
-          if (e.entries?.length > 0) ent[h.id] = e.entries[0].value
-        } catch { /* skip individual habit errors */ }
-      }
-      setHabitEntries(ent)
-    } catch { setHabits([]); setHabitEntries({}) }
+    reloadTasks()
   }
 
   const toggleHabit = async (habitId: string, value: string) => {
@@ -96,19 +131,19 @@ export function CalendarPage() {
     if (!title.trim() || !adding) return
     const et = endTime || `${String(parseInt(adding.startTime) + 1).padStart(2, '0')}:00`
     await api.calendar.create({ title: title.trim(), date: adding.date, startTime: adding.startTime, endTime: et })
-    setAdding(null); setTitle(''); setEndTime(''); load()
+    setAdding(null); setTitle(''); setEndTime(''); reloadEvents()
   }
 
   const handleDrop = async (date: string, hour: number) => {
     if (!dragging) return
     await api.calendar.update(dragging, { date, startTime: `${String(hour).padStart(2, '0')}:00` })
     setDragging(null)
-    load()
+    reloadEvents()
   }
 
   const deleteEvent = async (id: string) => {
     await api.calendar.delete(id)
-    load()
+    reloadEvents()
   }
 
   const eventsForDateHour = (date: string, hour: number) =>

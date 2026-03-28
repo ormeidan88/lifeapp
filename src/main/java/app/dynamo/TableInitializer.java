@@ -25,6 +25,8 @@ public class TableInitializer {
         this.dynamoDb = dynamoDb;
     }
 
+    public void ready() {} // called by SeedData to trigger this bean's @PostConstruct before seeding
+
     @PostConstruct
     void init() {
         if (!devMode) return;
