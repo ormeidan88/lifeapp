@@ -110,6 +110,15 @@ export const api = {
       return res.json()
     },
   },
+  converse: {
+    getModels: () => request('/converse/models'),
+    getPersonas: () => request('/converse/personas'),
+    createPersona: (name: string, systemPrompt: string) =>
+      request('/converse/personas', { method: 'POST', body: JSON.stringify({ name, systemPrompt }) }),
+    updatePersona: (id: string, body: { name?: string; systemPrompt?: string }) =>
+      request(`/converse/personas/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+    deletePersona: (id: string) => request(`/converse/personas/${id}`, { method: 'DELETE' }),
+  },
   waitingFor: {
     list: () => request('/waiting-for'),
     create: (description: string, waitingFor: string, dueDate: string) => request('/waiting-for', { method: 'POST', body: JSON.stringify({ description, waitingFor, dueDate }) }),

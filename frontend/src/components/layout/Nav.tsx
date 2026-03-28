@@ -59,6 +59,12 @@ function NavIcon({ name }: { name: string }) {
         <rect x="9" y="9" width="2" height="2" rx=".5" fill="currentColor" stroke="none" />
       </svg>
     ),
+    converse: (
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M2 2.5h12a.5.5 0 01.5.5v7a.5.5 0 01-.5.5H5.5L2.5 13.5V10.5H2a.5.5 0 01-.5-.5V3a.5.5 0 01.5-.5z" />
+        <path d="M5 6h6M5 8.5h4" />
+      </svg>
+    ),
   }
   return (
     <span className="w-4 h-4 flex-shrink-0 flex items-center justify-center">
@@ -77,9 +83,10 @@ const labels: Record<string, string> = {
   memorize: 'Memorize',
   books: 'Books',
   calendar: 'Calendar',
+  converse: 'Converse',
 }
 
-const items = ['inbox', 'projects', 'lists', 'pages', 'habits', 'memorize', 'books', 'calendar']
+const items = ['inbox', 'projects', 'lists', 'pages', 'habits', 'memorize', 'books', 'calendar', 'converse']
 
 type Props = { current: string; onNavigate: (page: string) => void; onLogout?: () => void }
 

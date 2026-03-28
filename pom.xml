@@ -97,6 +97,16 @@
             <artifactId>quarkus-scheduler</artifactId>
         </dependency>
 
+        <!-- Bedrock Runtime (Converse feature) — Converse Stream API for Claude 3+ models -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>bedrockruntime</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>netty-nio-client</artifactId>
+        </dependency>
+
         <!-- Test -->
         <dependency>
             <groupId>io.quarkus</groupId>

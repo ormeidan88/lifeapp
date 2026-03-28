@@ -59,4 +59,7 @@ public class Tables {
 
     @Produces @Named("waitingForItems")
     DynamoDbTable<WaitingForItem> waitingForItems() { return enhanced.table("waiting_for_items", TableSchema.fromBean(WaitingForItem.class)); }
+
+    @Produces @Named("personas")
+    DynamoDbTable<Persona> personas() { return enhanced.table("personas", TableSchema.fromBean(Persona.class)); }
 }

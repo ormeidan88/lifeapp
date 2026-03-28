@@ -11,6 +11,7 @@ import { HabitsPage } from './pages/HabitsPage'
 import { MemorizePage } from './pages/MemorizePage'
 import { BooksPage } from './pages/BooksPage'
 import { CalendarPage } from './pages/CalendarPage'
+import { ConversePage } from './pages/ConversePage'
 
 export default function App() {
   const { authenticated, login, logout } = useAuth()
@@ -48,6 +49,7 @@ export default function App() {
       case 'memorize': return <MemorizePage />
       case 'books': return <BooksPage />
       case 'calendar': return <CalendarPage />
+      case 'converse': return <ConversePage />
       default: return <InboxPage />
     }
   }
