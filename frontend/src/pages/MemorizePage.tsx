@@ -107,7 +107,7 @@ export function MemorizePage() {
         <button onClick={goBack} className="text-[var(--text-muted)] hover:text-[var(--text)] text-sm mb-4 block">← Back</button>
         <p className="text-sm text-[var(--text-muted)] mb-4">{cardIdx + 1} / {cards.length}</p>
         {/* Progress bar */}
-        <div className="w-full h-1 bg-gray-100 rounded-full mb-4 overflow-hidden">
+        <div className="w-full h-1 bg-[var(--bg-surface)] rounded-full mb-4 overflow-hidden">
           <div className="h-full bg-[var(--accent-sage)] rounded-full transition-all duration-300" style={{ width: `${((cardIdx + 1) / cards.length) * 100}%` }} />
         </div>
         {/* 3-D flip card */}
@@ -119,7 +119,7 @@ export function MemorizePage() {
           <div className={`card-flip-inner w-full ${flipped ? 'is-flipped' : ''}`} style={{ minHeight: '240px' }}>
             {/* Front face */}
             <div
-              className="card-flip-face bg-white border p-8"
+              className="card-flip-face bg-[var(--bg-card)] border p-8"
               style={{ borderColor: 'var(--border)', boxShadow: 'var(--shadow-sm)' }}
             >
               <div className="w-full">
@@ -147,7 +147,7 @@ export function MemorizePage() {
           <div className="flex gap-2 mt-5 justify-center">
             {[
               { key: 'AGAIN', label: 'Again', color: 'border-[var(--danger)] text-[var(--danger)] hover:bg-[var(--danger-light)]' },
-              { key: 'HARD', label: 'Hard', color: 'border-[var(--accent-terracotta)] text-[var(--accent-terracotta)] hover:bg-orange-50' },
+              { key: 'HARD', label: 'Hard', color: 'border-[var(--accent-terracotta)] text-[var(--accent-terracotta)] hover:bg-[rgba(190,122,98,0.10)]' },
               { key: 'GOOD', label: 'Good', color: 'border-[var(--accent-sage)] text-[var(--accent-sage)] hover:bg-[var(--accent-sage-light)]' },
               { key: 'EASY', label: 'Easy', color: 'border-[var(--accent-blue)] text-[var(--accent-blue)] hover:bg-[var(--accent-blue-light)]' },
             ].map(r => (
@@ -172,7 +172,7 @@ export function MemorizePage() {
         <button onClick={goBack} className="text-[var(--text-muted)] mb-4 hover:text-[var(--text)]">← Back</button>
         <h2 className="text-xl font-semibold mb-4">{deckName}</h2>
         {cards.length === 0 && mode === 'manage' && (
-          <p className="text-sm text-[var(--accent-sage)] mb-4 bg-green-50 px-3 py-2 rounded">No cards due for review right now.</p>
+          <p className="text-sm text-[var(--accent-sage)] mb-4 bg-[var(--accent-sage-light)] px-3 py-2 rounded">No cards due for review right now.</p>
         )}
         <h3 className="text-sm font-medium mb-2 text-[var(--text-muted)]">Add Card</h3>
         <form onSubmit={addCard} className="space-y-3 mb-6">
@@ -191,7 +191,7 @@ export function MemorizePage() {
             <h3 className="text-sm font-medium mb-2 text-[var(--text-muted)]">All Cards ({allCards.length})</h3>
             <div className="space-y-2">
               {allCards.map(c => (
-                <div key={c.id} className="bg-white rounded-lg border border-[var(--border)] overflow-hidden">
+                <div key={c.id} className="bg-[var(--bg-card)] rounded-lg border border-[var(--border)] overflow-hidden">
                   <div className="grid grid-cols-2 divide-x divide-[var(--border)]">
                     <div className="p-2 text-sm">
                       <div className="text-[10px] text-[var(--text-muted)] mb-1">Front</div>
@@ -252,7 +252,7 @@ export function MemorizePage() {
             <div className="flex gap-2">
               <button onClick={() => startReview(d.id)}
                 disabled={d.dueCount === 0}
-                className={`px-3 py-1 rounded text-sm ${d.dueCount > 0 ? 'bg-[var(--accent-sage)] text-white' : 'bg-gray-100 text-[var(--text-muted)] cursor-not-allowed'}`}>
+                className={`px-3 py-1 rounded text-sm ${d.dueCount > 0 ? 'bg-[var(--accent-sage)] text-white' : 'bg-[var(--bg-surface)] text-[var(--text-muted)] cursor-not-allowed'}`}>
                 {d.dueCount > 0 ? `Review (${d.dueCount})` : 'All caught up'}
               </button>
               <button onClick={() => openManage(d.id)} className="px-3 py-1 border border-[var(--border)] rounded text-sm">Manage</button>

@@ -38,7 +38,7 @@ export function MiniEditor({ content, editable = true, onChange, placeholder, mi
   if (!editor) return null
 
   return (
-    <div className={`bg-white rounded-lg border border-[var(--border)] ${editable ? '' : 'border-none'}`}>
+    <div className={`bg-[var(--bg-card)] rounded-lg border border-[var(--border)] ${editable ? '' : 'border-none'}`}>
       {editable && (
         <div className="flex gap-0.5 p-1 border-b border-[var(--border)] flex-wrap">
           {(['bold', 'italic'] as const).map(mark => (

@@ -172,7 +172,7 @@ export function CalendarPage() {
         </div>
       </div>
       {adding && (
-        <form onSubmit={addEvent} className="bg-white p-4 rounded-lg border border-[var(--border)] mb-4 flex gap-2 items-end">
+        <form onSubmit={addEvent} className="bg-[var(--bg-card)] p-4 rounded-lg border border-[var(--border)] mb-4 flex gap-2 items-end">
           <div className="flex-1">
             <label className="text-xs text-[var(--text-muted)]">{adding.date} at {adding.startTime}</label>
             <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Event title..." autoFocus
@@ -211,7 +211,7 @@ export function CalendarPage() {
                   onClick={() => setAdding({ date: d, startTime: `${String(h).padStart(2, '0')}:00` })}
                   onDragOver={e => { e.preventDefault(); dragTarget.current = { date: d, hour: h } }}
                   onDrop={() => handleDrop(d, h)}
-                  className={`border-t border-l border-[var(--border)] min-h-[48px] p-0.5 cursor-pointer hover:bg-gray-50 relative transition-colors
+                  className={`border-t border-l border-[var(--border)] min-h-[48px] p-0.5 cursor-pointer hover:bg-[var(--bg-surface)] relative transition-colors
                     ${d === todayStr ? 'bg-[var(--accent-sage-light)]' : ''}`}>
                   {eventsForDateHour(d, h).map(ev => (
                     <div key={ev.id}
@@ -223,7 +223,7 @@ export function CalendarPage() {
                       className={`text-xs px-1.5 py-0.5 rounded truncate cursor-grab active:cursor-grabbing group/ev relative ${!ev.color ? 'bg-[var(--accent-blue-light)] text-[var(--accent-blue)]' : ''}`}>
                       {ev.title}
                       <button onClick={(e) => { e.stopPropagation(); deleteEvent(ev.id) }}
-                        className="absolute -top-1 -right-1 w-4 h-4 bg-white border border-[var(--border)] rounded-full text-[8px] text-[var(--danger)] opacity-0 group-hover/ev:opacity-100 flex items-center justify-center">✕</button>
+                        className="absolute -top-1 -right-1 w-4 h-4 bg-[var(--bg-card)] border border-[var(--border)] rounded-full text-[8px] text-[var(--danger)] opacity-0 group-hover/ev:opacity-100 flex items-center justify-center">✕</button>
                     </div>
                   ))}
                   {/* Current time indicator */}
@@ -244,7 +244,7 @@ export function CalendarPage() {
         <div className="w-56 flex-shrink-0 hidden lg:block">
           {/* Spacer matching the calendar header row height */}
           <div className="h-[38px]"></div>
-          <div className="bg-white rounded-xl border border-[var(--border)] overflow-hidden">
+          <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden">
             <div className="px-4 py-2.5 border-b border-[var(--border)] bg-[var(--bg)]">
               <h3 className="font-semibold text-xs flex items-center justify-between">
                 <span className="flex items-center gap-1.5">☀️ Today</span>
@@ -269,7 +269,7 @@ export function CalendarPage() {
           </div>
 
           {/* Habits panel */}
-          <div className="bg-white rounded-xl border border-[var(--border)] overflow-hidden mt-3">
+          <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden mt-3">
             <div className="px-4 py-2.5 border-b border-[var(--border)] bg-[var(--bg)]">
               <h3 className="font-semibold text-xs flex items-center justify-between">
                 <span className="flex items-center gap-1.5">✅ Habits</span>
@@ -290,7 +290,7 @@ export function CalendarPage() {
                               ? v === 'YES' ? 'bg-[var(--accent-sage)] text-white'
                                 : v === 'NO' ? 'bg-[var(--danger)] text-white'
                                 : 'bg-[var(--border)] text-[var(--text)]'
-                              : 'bg-gray-100 text-[var(--text-muted)] hover:bg-gray-200'}`}>
+                              : 'bg-[var(--bg-surface)] text-[var(--text-muted)] hover:bg-[var(--border-subtle)]'}`}>
                           {v === 'YES' ? '✓' : v === 'NO' ? '✗' : '–'}
                         </button>
                       ))}

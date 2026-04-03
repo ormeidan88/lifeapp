@@ -15,7 +15,7 @@ export function LoginPage({ onLogin }: { onLogin: (pw: string) => Promise<boolea
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[var(--bg)]">
-      <form onSubmit={submit} className="bg-white p-8 rounded-2xl shadow-sm border border-[var(--border)] w-80">
+      <form onSubmit={submit} className="bg-[var(--bg-card)] p-8 rounded-2xl border border-[var(--border)] w-80" style={{ boxShadow: 'var(--shadow-md)' }}>
         <div className="flex justify-center mb-5">
           <div className="w-12 h-12 rounded-xl bg-[var(--accent-sage)] flex items-center justify-center text-white text-xl font-bold shadow-sm">
             L

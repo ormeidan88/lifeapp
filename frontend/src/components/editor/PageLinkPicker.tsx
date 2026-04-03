@@ -42,20 +42,20 @@ export function PageLinkPicker({ onSelect, onClose }: Props) {
   }
 
   return (
-    <div className="absolute z-50 bg-white border border-[var(--border)] rounded-lg shadow-lg w-64 overflow-hidden">
+    <div className="absolute z-50 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg w-64 overflow-hidden" style={{ boxShadow: 'var(--shadow-float)' }}>
       <input ref={inputRef} value={query} onChange={e => { setQuery(e.target.value); setSelected(0) }}
         onKeyDown={handleKey} placeholder="Search or create page..."
         className="w-full px-3 py-2 border-b border-[var(--border)] outline-none text-sm" />
       <div className="max-h-48 overflow-y-auto">
         {results.map((r, i) => (
           <button key={r.id} onClick={() => onSelect(r.id, r.title)}
-            className={`w-full text-left px-3 py-1.5 text-sm flex items-center gap-2 ${i === selected ? 'bg-gray-100' : 'hover:bg-gray-50'}`}>
+            className={`w-full text-left px-3 py-1.5 text-sm flex items-center gap-2 ${i === selected ? 'bg-[var(--bg-surface)]' : 'hover:bg-[var(--bg)]'}`}>
             <span>📄</span> {r.title}
           </button>
         ))}
         {query.trim() && (
           <button onClick={createAndSelect}
-            className={`w-full text-left px-3 py-1.5 text-sm flex items-center gap-2 ${selected === results.length ? 'bg-gray-100' : 'hover:bg-gray-50'}`}>
+            className={`w-full text-left px-3 py-1.5 text-sm flex items-center gap-2 ${selected === results.length ? 'bg-[var(--bg-surface)]' : 'hover:bg-[var(--bg)]'}`}>
             <span>➕</span> Create "{query.trim()}"
           </button>
         )}

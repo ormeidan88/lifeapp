@@ -26,7 +26,7 @@ function PageLinkView({ node, editor }: any) {
     <NodeViewWrapper as="span" className="inline">
       <span
         onClick={handleClick}
-        className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-gray-100 rounded cursor-pointer hover:bg-gray-200 text-sm"
+        className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[var(--bg-surface)] rounded cursor-pointer hover:bg-[var(--border)] text-sm"
         contentEditable={false}
       >
         📄 {title}

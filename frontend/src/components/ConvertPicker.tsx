@@ -61,7 +61,7 @@ export function ConvertPicker({ itemText, onConvert, onClose }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/20" />
-      <div className="relative bg-white rounded-2xl shadow-xl border border-[var(--border)] w-96 max-h-[70vh] flex flex-col" onClick={e => e.stopPropagation()}>
+      <div className="relative bg-[var(--bg-card)] rounded-2xl border border-[var(--border)] w-96 max-h-[70vh] flex flex-col" style={{ boxShadow: 'var(--shadow-float)' }} onClick={e => e.stopPropagation()}>
         {/* Header */}
         <div className="p-4 border-b border-[var(--border)]">
           <div className="flex items-center justify-between mb-3">
@@ -70,13 +70,13 @@ export function ConvertPicker({ itemText, onConvert, onClose }: Props) {
           </div>
           <p className="text-xs text-[var(--text-muted)] mb-3 truncate">"{itemText}"</p>
           {/* Tabs */}
-          <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5">
+          <div className="flex gap-1 bg-[var(--bg-surface)] rounded-lg p-0.5">
             <button onClick={() => setTab('project')}
-              className={`flex-1 text-xs py-1.5 rounded-md font-medium transition-colors ${tab === 'project' ? 'bg-white shadow-sm text-[var(--text)]' : 'text-[var(--text-muted)]'}`}>
+              className={`flex-1 text-xs py-1.5 rounded-md font-medium transition-colors ${tab === 'project' ? 'bg-[var(--bg-card)] shadow-sm text-[var(--text)]' : 'text-[var(--text-muted)]'}`}>
               Project (as task)
             </button>
             <button onClick={() => setTab('list')}
-              className={`flex-1 text-xs py-1.5 rounded-md font-medium transition-colors ${tab === 'list' ? 'bg-white shadow-sm text-[var(--text)]' : 'text-[var(--text-muted)]'}`}>
+              className={`flex-1 text-xs py-1.5 rounded-md font-medium transition-colors ${tab === 'list' ? 'bg-[var(--bg-card)] shadow-sm text-[var(--text)]' : 'text-[var(--text-muted)]'}`}>
               List
             </button>
           </div>

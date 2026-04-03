@@ -303,7 +303,7 @@ export function ConversePage() {
               className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
                 msg.role === 'user'
                   ? 'rounded-tr-sm text-white'
-                  : 'rounded-tl-sm border border-[var(--border)] bg-white'
+                  : 'rounded-tl-sm border border-[var(--border)] bg-[var(--bg-card)]'
               }`}
               style={msg.role === 'user' ? { background: 'var(--accent-sage)' } : { color: 'var(--text)' }}
             >
@@ -399,7 +399,7 @@ export function ConversePage() {
           placeholder="Send a message… (Enter to send, Shift+Enter for new line)"
           className="flex-1 px-4 py-2.5 border border-[var(--border)] rounded-xl outline-none text-sm resize-none overflow-hidden transition-colors"
           style={{
-            background: streaming ? 'var(--bg)' : 'white',
+            background: streaming ? 'var(--bg)' : 'var(--bg-card)',
             color: 'var(--text)',
           }}
         />
@@ -425,7 +425,7 @@ export function ConversePage() {
           style={{ background: 'rgba(0,0,0,0.35)' }}
           onClick={e => { if (e.target === e.currentTarget) setShowPersonaModal(false) }}
         >
-          <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl overflow-hidden">
+          <div className="bg-[var(--bg-card)] rounded-2xl w-full max-w-lg overflow-hidden" style={{ boxShadow: 'var(--shadow-float)' }}>
             {/* Modal header */}
             <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
               <h2 className="font-semibold text-base">Manage Personas</h2>

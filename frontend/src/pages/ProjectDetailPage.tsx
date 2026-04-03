@@ -73,8 +73,13 @@ export function ProjectDetailPage({ projectId, onBack }: { projectId: string; on
       <div className="flex items-center gap-3 mb-4">
         <h1 className="text-2xl font-semibold">{project.name}</h1>
         <select value={project.status} onChange={e => updateStatus(e.target.value)}
-          className="text-sm border border-[var(--border)] rounded px-2 py-1 bg-white">
-          {['NOT_STARTED', 'IN_PROGRESS', 'DONE', 'CANCELLED'].map(s => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
+          className="text-sm border border-[var(--border)] rounded-lg px-2.5 py-1.5 bg-[var(--bg-card)] outline-none"
+          style={{ color: 'var(--text)' }}>
+          {['NOT_STARTED', 'IN_PROGRESS', 'DONE', 'CANCELLED'].map(s => (
+            <option key={s} value={s}>
+              {{ NOT_STARTED: 'Not started', IN_PROGRESS: 'In progress', DONE: 'Done', CANCELLED: 'Cancelled' }[s]}
+            </option>
+          ))}
         </select>
       </div>
       <div className="flex gap-4 mb-4 border-b border-[var(--border)]">
@@ -98,7 +103,7 @@ export function ProjectDetailPage({ projectId, onBack }: { projectId: string; on
               onDragStart={() => setDragIdx(i)}
               onDragOver={e => e.preventDefault()}
               onDrop={() => handleDrop(i)}
-              className="flex items-center gap-3 bg-white px-3 py-2 rounded-lg border border-[var(--border)] group cursor-grab active:cursor-grabbing">
+              className="flex items-center gap-3 bg-[var(--bg-card)] px-3 py-2 rounded-lg border border-[var(--border)] group cursor-grab active:cursor-grabbing">
               <span className="text-[var(--text-muted)] opacity-0 group-hover:opacity-100 cursor-grab">⠿</span>
               <input type="checkbox" checked={t.done} onChange={() => toggleTask(t)} className="w-4 h-4 accent-[var(--accent-sage)]" />
               <span className={`flex-1 ${t.done ? 'line-through text-[var(--text-muted)]' : ''}`}>{t.title}</span>

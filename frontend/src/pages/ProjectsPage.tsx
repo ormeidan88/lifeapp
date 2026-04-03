@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react'
 import { api } from '../api/client'
 
 const statusConfig: Record<string, { bg: string; text: string; border: string; label: string }> = {
-  NOT_STARTED: { bg: 'bg-gray-50', text: 'text-gray-500', border: 'border-l-gray-300', label: 'Not Started' },
+  NOT_STARTED: { bg: 'bg-[var(--bg)]', text: 'text-[var(--text-muted)]', border: 'border-l-[var(--border)]', label: 'Not Started' },
   IN_PROGRESS: { bg: 'bg-[var(--accent-sage-light)]', text: 'text-[var(--accent-sage)]', border: 'border-l-[var(--accent-sage)]', label: 'In Progress' },
-  DONE: { bg: 'bg-green-50', text: 'text-green-700', border: 'border-l-green-500', label: 'Done' },
+  DONE: { bg: 'bg-[var(--accent-sage-light)]', text: 'text-[var(--accent-sage)]', border: 'border-l-[var(--accent-sage)]', label: 'Done' },
   CANCELLED: { bg: 'bg-[var(--danger-light)]', text: 'text-[var(--danger)]', border: 'border-l-[var(--danger)]', label: 'Cancelled' },
 }
 

@@ -91,7 +91,7 @@ export function BooksPage() {
 
       {/* Search panel */}
       {searching && (
-        <div className="mb-6 bg-white p-4 rounded-xl border border-[var(--border)]">
+        <div className="mb-6 bg-[var(--bg-card)] p-4 rounded-xl border border-[var(--border)]">
           <input value={query} onChange={e => handleQueryChange(e.target.value)}
             placeholder="Search by title or author..." autoFocus
             className="w-full px-3 py-2.5 border border-[var(--border)] rounded-lg outline-none text-sm mb-3" />
@@ -104,7 +104,7 @@ export function BooksPage() {
                 <div key={r.googleBooksId} className="flex gap-3 p-3 rounded-lg border border-[var(--border)] items-center hover:bg-[var(--bg)] transition-colors">
                   {r.coverUrl
                     ? <img src={r.coverUrl} alt="" className="w-12 h-16 object-cover rounded flex-shrink-0" />
-                    : <div className="w-12 h-16 bg-gray-100 rounded flex items-center justify-center text-lg flex-shrink-0">📖</div>
+                    : <div className="w-12 h-16 bg-[var(--bg-surface)] rounded flex items-center justify-center text-lg flex-shrink-0">📖</div>
                   }
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm">{r.title}</p>
@@ -133,11 +133,11 @@ export function BooksPage() {
         {books.map(b => (
           <div key={b.id} className="cursor-pointer hover:shadow-sm transition-shadow group relative">
             <button onClick={(e) => { e.stopPropagation(); deleteBook(b.id) }}
-              className="absolute top-2 right-2 text-[var(--text-muted)] hover:text-[var(--danger)] text-xs opacity-0 group-hover:opacity-100 bg-white rounded-full w-5 h-5 flex items-center justify-center shadow-sm">✕</button>
+              className="absolute top-2 right-2 text-[var(--text-muted)] hover:text-[var(--danger)] text-xs opacity-0 group-hover:opacity-100 bg-[var(--bg-card)] rounded-full w-5 h-5 flex items-center justify-center" style={{ boxShadow: 'var(--shadow-xs)' }}>✕</button>
             <div onClick={() => openBook(b)}>
               {b.coverUrl
-                ? <img src={b.coverUrl} alt="" className="w-full aspect-[2/3] object-cover rounded-lg mb-2 bg-gray-100" />
-                : <div className="w-full aspect-[2/3] rounded-lg mb-2 bg-gray-100 flex items-center justify-center text-3xl">📖</div>
+                ? <img src={b.coverUrl} alt="" className="w-full aspect-[2/3] object-cover rounded-lg mb-2 bg-[var(--bg-surface)]" />
+                : <div className="w-full aspect-[2/3] rounded-lg mb-2 bg-[var(--bg-surface)] flex items-center justify-center text-3xl">📖</div>
               }
               <p className="font-medium text-sm leading-snug">{b.title}</p>
               <p className="text-xs text-[var(--text-muted)] mt-0.5">{b.authors?.join(', ')}</p>

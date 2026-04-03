@@ -155,7 +155,8 @@ export function PageEditor({ content, onUpdate }: Props) {
       {/* Slash command menu */}
       {slash.open && slash.filtered.length > 0 && (
         <div ref={slash.containerRef}
-          className="absolute z-50 bg-white border border-[var(--border)] rounded-xl shadow-lg py-1.5 w-60 max-h-72 overflow-y-auto"
+          className="absolute z-50 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl py-1.5 w-60 max-h-72 overflow-y-auto"
+          style={{ boxShadow: 'var(--shadow-float)' }}
           style={{ top: slash.pos.top, left: slash.pos.left }}>
           {slash.filtered.map((item, i) => (
             <button key={item.title}
@@ -163,7 +164,7 @@ export function PageEditor({ content, onUpdate }: Props) {
               onMouseEnter={() => {}}
               className={`w-full text-left px-3 py-2 flex items-center gap-3 transition-colors
                 ${i === slash.selected ? 'bg-[var(--bg)]' : 'hover:bg-[var(--bg)]'}`}>
-              <span className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-xs font-mono text-[var(--text-muted)] flex-shrink-0">{item.icon}</span>
+              <span className="w-8 h-8 rounded-lg bg-[var(--bg-surface)] flex items-center justify-center text-xs font-mono text-[var(--text-muted)] flex-shrink-0">{item.icon}</span>
               <div>
                 <div className="text-sm font-medium">{item.title}</div>
                 <div className="text-[10px] text-[var(--text-muted)]">{item.description}</div>

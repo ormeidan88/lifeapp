@@ -136,8 +136,11 @@ export function PagesPage({ externalPageId, onClearExternal }: Props) {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {pages.map(p => (
           <div key={p.id} onClick={() => openPage(p.id)}
-            className="bg-white p-4 rounded-xl border border-[var(--border)] cursor-pointer hover:shadow-sm transition-shadow">
-            <h3 className="font-medium">📝 {p.title}</h3>
+            className="bg-[var(--bg-card)] p-4 rounded-xl border border-[var(--border)] cursor-pointer transition-all"
+            style={{ boxShadow: 'var(--shadow-card)' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card-hover)' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card)' }}>
+            <h3 className="font-medium">{p.title}</h3>
           </div>
         ))}
       </div>
