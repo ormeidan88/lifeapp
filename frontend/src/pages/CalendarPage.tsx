@@ -36,6 +36,8 @@ export function CalendarPage() {
   const [title, setTitle] = useState('')
   const [endTime, setEndTime] = useState('')
   const [dragging, setDragging] = useState<string | null>(null)
+  const [draggingTask, setDraggingTask] = useState<{ id: string; title: string } | null>(null)
+  const [dropTarget, setDropTarget] = useState<string | null>(null) // "${date}-${hour}"
   const dragTarget = useRef<{ date: string; hour: number } | null>(null)
 
   const dates = view === 'weekly' ? getWeekDates(weekOffset) : [getDayDate(dayOffset)]
@@ -135,10 +137,18 @@ export function CalendarPage() {
   }
 
   const handleDrop = async (date: string, hour: number) => {
-    if (!dragging) return
-    await api.calendar.update(dragging, { date, startTime: `${String(hour).padStart(2, '0')}:00` })
-    setDragging(null)
-    reloadEvents()
+    setDropTarget(null)
+    if (draggingTask) {
+      const startTime = `${String(hour).padStart(2, '0')}:00`
+      const endTime = `${String(hour + 1).padStart(2, '0')}:00`
+      await api.calendar.create({ title: draggingTask.title, date, startTime, endTime })
+      setDraggingTask(null)
+      reloadEvents()
+    } else if (dragging) {
+      await api.calendar.update(dragging, { date, startTime: `${String(hour).padStart(2, '0')}:00` })
+      setDragging(null)
+      reloadEvents()
+    }
   }
 
   const deleteEvent = async (id: string) => {
@@ -209,10 +219,11 @@ export function CalendarPage() {
               {dates.map(d => (
                 <div key={`${d}-${h}`}
                   onClick={() => setAdding({ date: d, startTime: `${String(h).padStart(2, '0')}:00` })}
-                  onDragOver={e => { e.preventDefault(); dragTarget.current = { date: d, hour: h } }}
+                  onDragOver={e => { e.preventDefault(); dragTarget.current = { date: d, hour: h }; setDropTarget(`${d}-${h}`) }}
+                  onDragLeave={() => setDropTarget(null)}
                   onDrop={() => handleDrop(d, h)}
-                  className={`border-t border-l border-[var(--border)] min-h-[48px] p-0.5 cursor-pointer hover:bg-[var(--bg-surface)] relative transition-colors
-                    ${d === todayStr ? 'bg-[var(--accent-sage-light)]' : ''}`}>
+                  className={`border-t border-l border-[var(--border)] min-h-[48px] p-0.5 cursor-pointer relative transition-colors
+                    ${dropTarget === `${d}-${h}` && draggingTask ? 'bg-[var(--accent-sage-light)] ring-1 ring-inset ring-[var(--accent-sage)]' : d === todayStr ? 'bg-[var(--accent-sage-light)]' : 'hover:bg-[var(--bg-surface)]'}`}>
                   {eventsForDateHour(d, h).map(ev => (
                     <div key={ev.id}
                       draggable
@@ -254,11 +265,18 @@ export function CalendarPage() {
             <div className="p-3 space-y-1 max-h-[calc(17*48px)] overflow-y-auto">
               {todayTasks.map(item => (
                 item.task && (
-                  <div key={item.taskId} className="flex items-center gap-2 group">
+                  <div key={item.taskId}
+                    draggable={!item.task.done}
+                    onDragStart={() => setDraggingTask({ id: item.task.id, title: item.task.title })}
+                    onDragEnd={() => { setDraggingTask(null); setDropTarget(null) }}
+                    className={`flex items-center gap-2 group ${!item.task.done ? 'cursor-grab active:cursor-grabbing' : ''}`}>
                     <input type="checkbox" checked={item.task.done} onChange={() => toggleTodayTask(item.task)} />
-                    <span className={`text-sm flex-1 ${item.task.done ? 'line-through text-[var(--text-muted)]' : ''}`}>
+                    <span className={`text-sm flex-1 select-none ${item.task.done ? 'line-through text-[var(--text-muted)]' : ''}`}>
                       {item.task.title}
                     </span>
+                    {!item.task.done && (
+                      <span className="text-[var(--text-faint)] opacity-0 group-hover:opacity-100 text-xs">⠿</span>
+                    )}
                   </div>
                 )
               ))}
