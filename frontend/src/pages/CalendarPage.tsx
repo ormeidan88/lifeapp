@@ -35,9 +35,12 @@ export function CalendarPage() {
   const [adding, setAdding] = useState<{ date: string; startTime: string } | null>(null)
   const [title, setTitle] = useState('')
   const [endTime, setEndTime] = useState('')
+  const [newNotes, setNewNotes] = useState('')
   const [dragging, setDragging] = useState<string | null>(null)
   const [draggingTask, setDraggingTask] = useState<{ id: string; title: string } | null>(null)
   const [dropTarget, setDropTarget] = useState<string | null>(null) // "${date}-${hour}"
+  const [editingEvent, setEditingEvent] = useState<any | null>(null)
+  const [editNotes, setEditNotes] = useState('')
   const dragTarget = useRef<{ date: string; hour: number } | null>(null)
 
   const dates = view === 'weekly' ? getWeekDates(weekOffset) : [getDayDate(dayOffset)]
@@ -132,8 +135,8 @@ export function CalendarPage() {
     e.preventDefault()
     if (!title.trim() || !adding) return
     const et = endTime || `${String(parseInt(adding.startTime) + 1).padStart(2, '0')}:00`
-    await api.calendar.create({ title: title.trim(), date: adding.date, startTime: adding.startTime, endTime: et })
-    setAdding(null); setTitle(''); setEndTime(''); reloadEvents()
+    await api.calendar.create({ title: title.trim(), date: adding.date, startTime: adding.startTime, endTime: et, ...(newNotes.trim() ? { notes: newNotes.trim() } : {}) })
+    setAdding(null); setTitle(''); setEndTime(''); setNewNotes(''); reloadEvents()
   }
 
   const handleDrop = async (date: string, hour: number) => {
@@ -153,6 +156,19 @@ export function CalendarPage() {
 
   const deleteEvent = async (id: string) => {
     await api.calendar.delete(id)
+    reloadEvents()
+  }
+
+  const openEventDetail = (ev: any, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setEditingEvent(ev)
+    setEditNotes(ev.notes || '')
+  }
+
+  const saveNotes = async () => {
+    if (!editingEvent) return
+    await api.calendar.update(editingEvent.id, { notes: editNotes })
+    setEditingEvent(null)
     reloadEvents()
   }
 
@@ -182,16 +198,20 @@ export function CalendarPage() {
         </div>
       </div>
       {adding && (
-        <form onSubmit={addEvent} className="bg-[var(--bg-card)] p-4 rounded-lg border border-[var(--border)] mb-4 flex gap-2 items-end">
-          <div className="flex-1">
-            <label className="text-xs text-[var(--text-muted)]">{adding.date} at {adding.startTime}</label>
-            <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Event title..." autoFocus
-              className="w-full px-3 py-2 border border-[var(--border)] rounded-lg outline-none focus:border-[var(--accent-sage)]" />
+        <form onSubmit={addEvent} className="bg-[var(--bg-card)] p-4 rounded-lg border border-[var(--border)] mb-4 space-y-2">
+          <div className="flex gap-2 items-end">
+            <div className="flex-1">
+              <label className="text-xs text-[var(--text-muted)]">{adding.date} at {adding.startTime}</label>
+              <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Event title..." autoFocus
+                className="w-full px-3 py-2 border border-[var(--border)] rounded-lg outline-none focus:border-[var(--accent-sage)]" />
+            </div>
+            <input value={endTime} onChange={e => setEndTime(e.target.value)} placeholder="End (HH:mm)"
+              className="w-28 px-3 py-2 border border-[var(--border)] rounded-lg outline-none" />
+            <button type="submit" className="px-4 py-2 bg-[var(--accent-sage)] text-white rounded-lg text-sm">Add</button>
+            <button type="button" onClick={() => { setAdding(null); setNewNotes('') }} className="px-3 py-2 text-sm text-[var(--text-muted)]">Cancel</button>
           </div>
-          <input value={endTime} onChange={e => setEndTime(e.target.value)} placeholder="End (HH:mm)"
-            className="w-28 px-3 py-2 border border-[var(--border)] rounded-lg outline-none" />
-          <button type="submit" className="px-4 py-2 bg-[var(--accent-sage)] text-white rounded-lg text-sm">Add</button>
-          <button type="button" onClick={() => setAdding(null)} className="px-3 py-2 text-sm text-[var(--text-muted)]">Cancel</button>
+          <textarea value={newNotes} onChange={e => setNewNotes(e.target.value)} placeholder="Notes"
+            rows={2} className="w-full px-3 py-2 border border-[var(--border)] rounded-lg outline-none focus:border-[var(--accent-sage)] text-sm resize-none" />
         </form>
       )}
       <div className="flex gap-4">
@@ -229,10 +249,11 @@ export function CalendarPage() {
                       draggable
                       onDragStart={(e) => { e.stopPropagation(); setDragging(ev.id) }}
                       onDragEnd={() => setDragging(null)}
-                      onClick={(e) => e.stopPropagation()}
+                      onClick={(e) => openEventDetail(ev, e)}
                       style={ev.color ? { backgroundColor: ev.color + '33', color: ev.color } : undefined}
                       className={`text-xs px-1.5 py-0.5 rounded truncate cursor-grab active:cursor-grabbing group/ev relative ${!ev.color ? 'bg-[var(--accent-blue-light)] text-[var(--accent-blue)]' : ''}`}>
                       {ev.title}
+                      {ev.notes && <span className="ml-1 opacity-50">✎</span>}
                       <button onClick={(e) => { e.stopPropagation(); deleteEvent(ev.id) }}
                         className="absolute -top-1 -right-1 w-4 h-4 bg-[var(--bg-card)] border border-[var(--border)] rounded-full text-[8px] text-[var(--danger)] opacity-0 group-hover/ev:opacity-100 flex items-center justify-center">✕</button>
                     </div>
@@ -323,6 +344,35 @@ export function CalendarPage() {
           </div>
         </div>
       </div>
+
+      {/* Event detail modal for notes */}
+      {editingEvent && (
+        <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center" onClick={() => saveNotes()}>
+          <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] shadow-lg w-96 max-w-[90vw]" onClick={e => e.stopPropagation()}>
+            <div className="px-4 py-3 border-b border-[var(--border)] flex items-center justify-between">
+              <h3 className="font-semibold text-sm">{editingEvent.title}</h3>
+              <span className="text-xs text-[var(--text-muted)]">
+                {editingEvent.startTime}–{editingEvent.endTime}
+              </span>
+            </div>
+            <div className="p-4">
+              <label className="text-xs text-[var(--text-muted)] mb-1 block">Notes</label>
+              <textarea
+                value={editNotes}
+                onChange={e => setEditNotes(e.target.value)}
+                placeholder="Add notes..."
+                autoFocus
+                rows={4}
+                className="w-full px-3 py-2 border border-[var(--border)] rounded-lg outline-none focus:border-[var(--accent-sage)] text-sm resize-none"
+              />
+            </div>
+            <div className="px-4 py-3 border-t border-[var(--border)] flex justify-end gap-2">
+              <button onClick={() => { setEditingEvent(null) }} className="px-3 py-1.5 text-sm text-[var(--text-muted)]">Cancel</button>
+              <button onClick={saveNotes} className="px-4 py-1.5 bg-[var(--accent-sage)] text-white rounded-lg text-sm">Save</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

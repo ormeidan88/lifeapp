@@ -44,6 +44,7 @@ public class CalendarResource {
         event.setStartTime(startTime);
         event.setEndTime(endTime);
         event.setColor(body.get("color"));
+        event.setNotes(body.get("notes"));
         event.setSource(body.getOrDefault("source", "manual"));
         event.setCreatedAt(Instant.now().toString());
         table.putItem(event);
@@ -71,6 +72,7 @@ public class CalendarResource {
         if (body.containsKey("startTime")) event.setStartTime(body.get("startTime"));
         if (body.containsKey("endTime")) event.setEndTime(body.get("endTime"));
         if (body.containsKey("color")) event.setColor(body.get("color"));
+        if (body.containsKey("notes")) event.setNotes(body.get("notes"));
         table.putItem(event);
         return Response.ok(eventToMap(event)).build();
     }
@@ -88,6 +90,7 @@ public class CalendarResource {
         m.put("endTime", e.getEndTime()); m.put("source", e.getSource());
         m.put("createdAt", e.getCreatedAt());
         if (e.getColor() != null) m.put("color", e.getColor());
+        if (e.getNotes() != null) m.put("notes", e.getNotes());
         return m;
     }
 }

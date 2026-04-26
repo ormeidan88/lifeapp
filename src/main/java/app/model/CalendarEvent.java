@@ -11,6 +11,7 @@ public class CalendarEvent {
     private String startTime;
     private String endTime;
     private String color;
+    private String notes;
     private String source; // manual, external
     private String createdAt;
 
@@ -37,6 +38,9 @@ public class CalendarEvent {
 
     public String getColor() { return color; }
     public void setColor(String color) { this.color = color; }
+
+    public String getNotes() { return notes; }
+    public void setNotes(String notes) { this.notes = notes; }
 
     public String getSource() { return source; }
     public void setSource(String source) { this.source = source; }

@@ -48,7 +48,8 @@ public class ConverseResource {
 
     public static final List<Map<String, String>> AVAILABLE_MODELS = List.of(
             Map.of("id", "us.anthropic.claude-haiku-4-5-20251001-v1:0", "name", "Claude Haiku 4.5"),
-            Map.of("id", "us.anthropic.claude-sonnet-4-5-20251001-v1:0", "name", "Claude Sonnet 4.5")
+            Map.of("id", "us.anthropic.claude-sonnet-4-5-20251001-v1:0", "name", "Claude Sonnet 4.5"),
+            Map.of("id", "global.anthropic.claude-opus-4-6-v1", "name", "Claude Opus 4.6")
     );
 
     @Inject @Named("personas") DynamoDbTable<Persona> personasTable;
