@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { api } from '../api/client'
+import { DailyNotePanel } from '../components/calendar/DailyNotePanel'
 
 const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 const hours = Array.from({ length: 17 }, (_, i) => i + 6) // 6am-10pm
@@ -273,7 +274,7 @@ export function CalendarPage() {
         </div>
 
         {/* Today's tasks panel — aligned with 6am line */}
-        <div className="w-56 flex-shrink-0 hidden lg:block">
+        <div className={`${view === 'daily' ? 'w-80' : 'w-56'} flex-shrink-0 hidden lg:block`}>
           {/* Spacer matching the calendar header row height */}
           <div className="h-[38px]"></div>
           <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden">
@@ -342,6 +343,9 @@ export function CalendarPage() {
               )}
             </div>
           </div>
+
+          {/* Daily notes panel — daily view only */}
+          {view === 'daily' && <DailyNotePanel date={selectedDate} />}
         </div>
       </div>
 

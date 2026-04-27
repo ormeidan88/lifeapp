@@ -411,6 +411,14 @@ public class ConverseResource {
         // Decks / Memorize
         t.add(tool("list_decks", "List all flashcard decks with due card counts",
                 props(), req()));
+
+        // Daily Notes
+        t.add(tool("get_daily_notes", "Get daily notes for a date range",
+                props("from", "Start date YYYY-MM-DD", "to", "End date YYYY-MM-DD"),
+                req("from", "to")));
+        t.add(tool("search_daily_notes", "Search daily notes by keyword",
+                props("query", "Search text to find in notes"),
+                req("query")));
         t.add(tool("list_deck_cards", "List all cards in a flashcard deck",
                 props("deckId", "The deck ID"), req("deckId")));
         t.add(tool("get_due_cards", "Get cards currently due for review in a deck",
@@ -629,6 +637,12 @@ public class ConverseResource {
                 case "review_card" -> post(
                         "/api/decks/" + p.get("deckId") + "/cards/" + p.get("cardId") + "/review",
                         Map.of("rating", p.get("rating")));
+
+                // Daily Notes
+                case "get_daily_notes" -> get("/api/daily-notes",
+                        Map.of("from", p.get("from"), "to", p.get("to")));
+                case "search_daily_notes" -> get("/api/daily-notes/search",
+                        Map.of("q", p.get("query")));
 
                 default -> "{\"error\":\"Unknown tool: " + name + "\"}";
             };

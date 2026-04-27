@@ -55,6 +55,7 @@ public class TableInitializer {
                 List.of(gsi("userId-date-index", "userId", "date")));
         createIfMissing(existing, "waiting_for_items", "userId", "itemId", null);
         createIfMissing(existing, "personas", "userId", "personaId", null);
+        createIfMissing(existing, "daily_notes", "userId", "date", null);
 
         LOG.info("Dev mode: all tables ready.");
     }

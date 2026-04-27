@@ -102,6 +102,12 @@ export const api = {
     update: (id: string, body: any) => request(`/calendar/events/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
     delete: (id: string) => request(`/calendar/events/${id}`, { method: 'DELETE' }),
   },
+  dailyNotes: {
+    get: (date: string) => request(`/daily-notes/${date}`),
+    put: (date: string, body: any) => request(`/daily-notes/${date}`, { method: 'PUT', body: JSON.stringify(body) }),
+    list: (from: string, to: string) => request(`/daily-notes?from=${from}&to=${to}`),
+    search: (q: string) => request(`/daily-notes/search?q=${encodeURIComponent(q)}`),
+  },
   images: {
     upload: async (file: File) => {
       const form = new FormData()

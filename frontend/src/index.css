@@ -420,3 +420,15 @@ input[type="checkbox"]:checked::after {
   float: left;
   height: 0;
 }
+
+.daily-note-editor .tiptap {
+  padding: 0.5rem 0.75rem;
+  min-height: 120px;
+  max-height: 400px;
+  overflow-y: auto;
+  font-size: 0.8125rem;
+}
+.daily-note-editor .tiptap p { margin: 0.15rem 0; }
+.daily-note-editor .tiptap h1 { font-size: 1.1rem; }
+.daily-note-editor .tiptap h2 { font-size: 1rem; }
+.daily-note-editor .tiptap h3 { font-size: 0.9rem; }
