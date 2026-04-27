@@ -176,6 +176,23 @@ export function CalendarPage() {
   const eventsForDateHour = (date: string, hour: number) =>
     events.filter(e => e.date === date && e.startTime && parseInt(e.startTime) === hour)
 
+  const getEventStyle = (ev: any) => {
+    const startH = parseInt(ev.startTime)
+    const startM = parseInt(ev.startTime?.split(':')[1] || '0')
+    const endH = ev.endTime ? parseInt(ev.endTime) : startH + 1
+    const endM = parseInt(ev.endTime?.split(':')[1] || '0')
+    const topMin = startM
+    const durationMin = (endH - startH) * 60 + (endM - startM)
+    return {
+      top: `${(topMin / 60) * 48}px`,
+      height: `${Math.max((durationMin / 60) * 48, 20)}px`,
+      left: '2px',
+      right: '2px',
+      position: 'absolute' as const,
+      zIndex: 5,
+    }
+  }
+
   const todayStr = new Date().toISOString().slice(0, 10)
   const currentHour = new Date().getHours()
   const currentMinute = new Date().getMinutes()
@@ -251,9 +268,9 @@ export function CalendarPage() {
                       onDragStart={(e) => { e.stopPropagation(); setDragging(ev.id) }}
                       onDragEnd={() => setDragging(null)}
                       onClick={(e) => openEventDetail(ev, e)}
-                      style={ev.color ? { backgroundColor: ev.color + '33', color: ev.color } : undefined}
-                      className={`text-xs px-1.5 py-0.5 rounded truncate cursor-grab active:cursor-grabbing group/ev relative ${!ev.color ? 'bg-[var(--accent-blue-light)] text-[var(--accent-blue)]' : ''}`}>
-                      {ev.title}
+                      style={{ ...getEventStyle(ev), ...(ev.color ? { backgroundColor: ev.color + '33', color: ev.color } : {}) }}
+                      className={`text-xs px-1.5 py-0.5 rounded cursor-grab active:cursor-grabbing group/ev overflow-hidden ${!ev.color ? 'bg-[var(--accent-blue-light)] text-[var(--accent-blue)]' : ''}`}>
+                      <span className="truncate block">{ev.title}</span>
                       {ev.notes && <span className="ml-1 opacity-50">✎</span>}
                       <button onClick={(e) => { e.stopPropagation(); deleteEvent(ev.id) }}
                         className="absolute -top-1 -right-1 w-4 h-4 bg-[var(--bg-card)] border border-[var(--border)] rounded-full text-[8px] text-[var(--danger)] opacity-0 group-hover/ev:opacity-100 flex items-center justify-center">✕</button>
