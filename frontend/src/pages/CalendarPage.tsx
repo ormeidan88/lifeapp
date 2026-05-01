@@ -221,16 +221,90 @@ export function CalendarPage() {
   const eventsForDateHour = (date: string, hour: number) =>
     events.filter(e => e.date === date && e.startTime && parseInt(e.startTime) === hour)
 
+  // Compute overlap layout for all events on a given date
+  const overlapLayout = (date: string): Map<string, { col: number; totalCols: number }> => {
+    const dayEvents = events
+      .filter(e => e.date === date && e.startTime)
+      .map(e => {
+        const sh = parseInt(e.startTime); const sm = parseInt(e.startTime?.split(':')[1] || '0')
+        const eh = e.endTime ? parseInt(e.endTime) : sh + 1; const em = parseInt(e.endTime?.split(':')[1] || '0')
+        return { id: e.id + '-' + e.date, start: sh * 60 + sm, end: eh * 60 + em }
+      })
+      .sort((a, b) => a.start - b.start || a.end - b.end)
+
+    const layout = new Map<string, { col: number; totalCols: number }>()
+    const groups: typeof dayEvents[] = []
+
+    for (const ev of dayEvents) {
+      let placed = false
+      for (const group of groups) {
+        if (group.some(g => g.start < ev.end && ev.start < g.end)) {
+          group.push(ev); placed = true; break
+        }
+      }
+      if (!placed) groups.push([ev])
+    }
+
+    // Merge overlapping groups that share transitive overlaps
+    let merged = true
+    while (merged) {
+      merged = false
+      for (let i = 0; i < groups.length; i++) {
+        for (let j = i + 1; j < groups.length; j++) {
+          if (groups[i].some(a => groups[j].some(b => a.start < b.end && b.start < a.end))) {
+            groups[i].push(...groups[j]); groups.splice(j, 1); merged = true; break
+          }
+        }
+        if (merged) break
+      }
+    }
+
+    for (const group of groups) {
+      // Assign columns greedily
+      const cols: typeof dayEvents[] = []
+      const sorted = [...group].sort((a, b) => a.start - b.start || a.end - b.end)
+      for (const ev of sorted) {
+        let placed = false
+        for (let c = 0; c < cols.length; c++) {
+          if (cols[c].every(g => g.end <= ev.start || ev.end <= g.start)) {
+            cols[c].push(ev); layout.set(ev.id, { col: c, totalCols: 0 }); placed = true; break
+          }
+        }
+        if (!placed) { layout.set(ev.id, { col: cols.length, totalCols: 0 }); cols.push([ev]) }
+      }
+      for (const ev of group) {
+        const l = layout.get(ev.id)!; l.totalCols = cols.length
+      }
+    }
+    return layout
+  }
+
+  // Cache per render
+  const layoutCache = useRef<Map<string, Map<string, { col: number; totalCols: number }>>>(new Map())
+  const getLayout = (date: string) => {
+    if (!layoutCache.current.has(date)) layoutCache.current.set(date, overlapLayout(date))
+    return layoutCache.current.get(date)!
+  }
+  // Clear cache when events change
+  useEffect(() => { layoutCache.current = new Map() }, [events])
+
   const getEventStyle = (ev: any) => {
     const startH = parseInt(ev.startTime)
     const startM = parseInt(ev.startTime?.split(':')[1] || '0')
     const endH = ev.endTime ? parseInt(ev.endTime) : startH + 1
     const endM = parseInt(ev.endTime?.split(':')[1] || '0')
     const durationMin = (endH - startH) * 60 + (endM - startM)
+    const layout = getLayout(ev.date)
+    const info = layout.get(ev.id + '-' + ev.date)
+    const col = info?.col ?? 0
+    const totalCols = info?.totalCols ?? 1
+    const widthPct = 100 / totalCols
+    const leftPct = col * widthPct
     return {
       top: `${(startM / 60) * 48}px`,
       height: `${Math.max((durationMin / 60) * 48, 20)}px`,
-      left: '2px', right: '2px',
+      left: `calc(${leftPct}% + 1px)`,
+      width: `calc(${widthPct}% - 2px)`,
       position: 'absolute' as const, zIndex: 5,
     }
   }
@@ -288,15 +362,49 @@ export function CalendarPage() {
                   onDragOver={e => { e.preventDefault(); dragTarget.current = { date: d, hour: h }; setDropTarget(`${d}-${h}`) }}
                   onDragLeave={() => setDropTarget(null)}
                   onDrop={() => handleDrop(d, h)}
-                  className={`border-t border-l border-[var(--border)] min-h-[48px] p-0.5 cursor-pointer relative transition-colors
+                  className={`border-t border-l border-[var(--border)] h-[48px] cursor-pointer transition-colors
                     ${dropTarget === `${d}-${h}` && (draggingTask || draggingEvent) ? 'bg-[var(--accent-sage-light)] ring-1 ring-inset ring-[var(--accent-sage)]' : d === todayStr ? 'bg-[var(--accent-sage-light)]' : 'hover:bg-[var(--bg-surface)]'}`}>
-                  {eventsForDateHour(d, h).map(ev => (
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+        {/* Event overlays — one per day column, positioned over the grid */}
+        <div className={`grid ${view === 'weekly' ? 'min-w-[700px]' : 'min-w-[300px]'}`}
+          style={{ gridTemplateColumns: `60px repeat(${dates.length}, 1fr)`, marginTop: `${-(hours.length * 48)}px`, pointerEvents: 'none' }}>
+          <div />
+          {dates.map(d => {
+            const dayEvents = events.filter(e => e.date === d && e.startTime)
+            return (
+              <div key={`overlay-${d}`} className="relative" style={{ height: `${hours.length * 48}px` }}>
+                {dayEvents.map(ev => {
+                  const startH = parseInt(ev.startTime)
+                  const startM = parseInt(ev.startTime?.split(':')[1] || '0')
+                  const endH = ev.endTime ? parseInt(ev.endTime) : startH + 1
+                  const endM = parseInt(ev.endTime?.split(':')[1] || '0')
+                  const topMin = (startH - hours[0]) * 60 + startM
+                  const durationMin = (endH - startH) * 60 + (endM - startM)
+                  const layout = getLayout(d)
+                  const info = layout.get(ev.id + '-' + ev.date)
+                  const col = info?.col ?? 0
+                  const totalCols = info?.totalCols ?? 1
+                  const widthPct = 100 / totalCols
+                  const leftPct = col * widthPct
+                  return (
                     <div key={ev.id + '-' + ev.date}
                       draggable
                       onDragStart={(e) => { e.stopPropagation(); setDragging(ev.id); setDraggingEvent(ev) }}
                       onDragEnd={() => { setDragging(null); setDraggingEvent(null) }}
                       onClick={(e) => { e.stopPropagation(); handleEditEvent(ev) }}
-                      style={{ ...getEventStyle(ev), ...(ev.color ? { backgroundColor: ev.color + '33', color: ev.color } : {}) }}
+                      style={{
+                        position: 'absolute',
+                        top: `${(topMin / 60) * 48}px`,
+                        height: `${Math.max((durationMin / 60) * 48, 20)}px`,
+                        left: `calc(${leftPct}% + 1px)`,
+                        width: `calc(${widthPct}% - 2px)`,
+                        zIndex: 5, pointerEvents: 'auto',
+                        ...(ev.color ? { backgroundColor: ev.color + '33', color: ev.color } : {}),
+                      }}
                       className={`text-xs px-1.5 py-0.5 rounded cursor-grab active:cursor-grabbing group/ev overflow-hidden ${!ev.color ? 'bg-[var(--accent-blue-light)] text-[var(--accent-blue)]' : ''}`}>
                       <span className="truncate block">
                         {ev.isRecurring && <span className="mr-0.5">🔁</span>}
@@ -304,19 +412,21 @@ export function CalendarPage() {
                       </span>
                       {ev.notes && <span className="ml-1 opacity-50">✎</span>}
                       <button onClick={(e) => handleDeleteEvent(ev, e)}
-                        className="absolute -top-1 -right-1 w-4 h-4 bg-[var(--bg-card)] border border-[var(--border)] rounded-full text-[8px] text-[var(--danger)] opacity-0 group-hover/ev:opacity-100 flex items-center justify-center">✕</button>
+                        className="absolute -top-1 -right-1 w-4 h-4 bg-[var(--bg-card)] border border-[var(--border)] rounded-full text-[8px] text-[var(--danger)] opacity-0 group-hover/ev:opacity-100 flex items-center justify-center"
+                        style={{ pointerEvents: 'auto' }}>✕</button>
                     </div>
-                  ))}
-                  {d === todayStr && h === currentHour && (
-                    <div className="absolute left-0 right-0 border-t-2 border-[var(--accent-terracotta)] z-10 pointer-events-none"
-                      style={{ top: `${(currentMinute / 60) * 100}%` }}>
-                      <div className="w-2 h-2 rounded-full bg-[var(--accent-terracotta)] -mt-1 -ml-1" />
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          ))}
+                  )
+                })}
+                {/* Current time indicator */}
+                {d === todayStr && currentHour >= hours[0] && currentHour <= hours[hours.length - 1] && (
+                  <div className="absolute left-0 right-0 border-t-2 border-[var(--accent-terracotta)] z-10 pointer-events-none"
+                    style={{ top: `${((currentHour - hours[0]) * 60 + currentMinute) / 60 * 48}px` }}>
+                    <div className="w-2 h-2 rounded-full bg-[var(--accent-terracotta)] -mt-1 -ml-1" />
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
         </div>
 
