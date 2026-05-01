@@ -12,8 +12,11 @@ public class CalendarEvent {
     private String endTime;
     private String color;
     private String notes;
-    private String source; // manual, external
+    private String source;
     private String createdAt;
+    private String recurrenceRule;
+    private String recurrenceId;
+    private String recurrenceDate;
 
     @DynamoDbPartitionKey
     public String getUserId() { return userId; }
@@ -47,4 +50,13 @@ public class CalendarEvent {
 
     public String getCreatedAt() { return createdAt; }
     public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
+
+    public String getRecurrenceRule() { return recurrenceRule; }
+    public void setRecurrenceRule(String recurrenceRule) { this.recurrenceRule = recurrenceRule; }
+
+    public String getRecurrenceId() { return recurrenceId; }
+    public void setRecurrenceId(String recurrenceId) { this.recurrenceId = recurrenceId; }
+
+    public String getRecurrenceDate() { return recurrenceDate; }
+    public void setRecurrenceDate(String recurrenceDate) { this.recurrenceDate = recurrenceDate; }
 }

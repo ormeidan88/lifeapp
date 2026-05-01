@@ -100,7 +100,10 @@ export const api = {
     list: (from: string, to: string) => request(`/calendar/events?from=${from}&to=${to}`),
     create: (body: any) => request('/calendar/events', { method: 'POST', body: JSON.stringify(body) }),
     update: (id: string, body: any) => request(`/calendar/events/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
-    delete: (id: string) => request(`/calendar/events/${id}`, { method: 'DELETE' }),
+    delete: (id: string, params?: { deleteMode?: string; occurrenceDate?: string }) => {
+      const q = params ? '?' + new URLSearchParams(params as any).toString() : ''
+      return request(`/calendar/events/${id}${q}`, { method: 'DELETE' })
+    },
   },
   dailyNotes: {
     get: (date: string) => request(`/daily-notes/${date}`),

@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { api } from '../api/client'
 import { DailyNotePanel } from '../components/calendar/DailyNotePanel'
+import { EventFormModal } from '../components/calendar/EventFormModal'
+import { RecurrencePrompt } from '../components/calendar/RecurrencePrompt'
 
 const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 const hours = Array.from({ length: 17 }, (_, i) => i + 6) // 6am-10pm
@@ -8,7 +10,6 @@ const hours = Array.from({ length: 17 }, (_, i) => i + 6) // 6am-10pm
 const getWeekDates = (offset: number) => {
   const d = new Date()
   const day = d.getDay()
-  // getDay() returns 0 for Sunday — adjust so Monday is start of week
   const diff = day === 0 ? -6 : 1 - day
   d.setDate(d.getDate() + diff + offset * 7)
   return Array.from({ length: 7 }, (_, i) => {
@@ -33,43 +34,41 @@ export function CalendarPage() {
   const [todayListId, setTodayListId] = useState<string | null>(null)
   const [habits, setHabits] = useState<any[]>([])
   const [habitEntries, setHabitEntries] = useState<Record<string, string>>({})
-  const [adding, setAdding] = useState<{ date: string; startTime: string } | null>(null)
-  const [title, setTitle] = useState('')
-  const [endTime, setEndTime] = useState('')
-  const [newNotes, setNewNotes] = useState('')
   const [dragging, setDragging] = useState<string | null>(null)
+  const [draggingEvent, setDraggingEvent] = useState<any | null>(null)
   const [draggingTask, setDraggingTask] = useState<{ id: string; title: string } | null>(null)
-  const [dropTarget, setDropTarget] = useState<string | null>(null) // "${date}-${hour}"
-  const [editingEvent, setEditingEvent] = useState<any | null>(null)
-  const [editNotes, setEditNotes] = useState('')
+  const [dropTarget, setDropTarget] = useState<string | null>(null)
+
+  // Modal state
+  const [formModal, setFormModal] = useState<{ mode: 'create' | 'edit'; initial?: any; event?: any } | null>(null)
+  const [recurrencePrompt, setRecurrencePrompt] = useState<{
+    action: 'edit' | 'delete' | 'move'
+    event: any
+    pendingData?: any // for edit/move
+  } | null>(null)
+
   const dragTarget = useRef<{ date: string; hour: number } | null>(null)
 
   const dates = view === 'weekly' ? getWeekDates(weekOffset) : [getDayDate(dayOffset)]
   const from = dates[0]
   const to = dates[dates.length - 1]
-
-  // The "selected date" for the side panel — today in weekly view, the viewed day in daily view
   const selectedDate = view === 'daily' ? getDayDate(dayOffset) : new Date().toISOString().slice(0, 10)
 
   useEffect(() => {
     let ignore = false
-    const run = async () => {
+    ;(async () => {
       try {
         const d = await api.calendar.list(from, to)
         if (!ignore) setEvents(d.events || [])
-      } catch {
-        if (!ignore) setEvents([])
-      }
-    }
-    run()
+      } catch { if (!ignore) setEvents([]) }
+    })()
     return () => { ignore = true }
   }, [weekOffset, dayOffset, view])
 
   useEffect(() => {
     let ignore = false
-    const run = async () => {
+    ;(async () => {
       try {
-        // Tasks
         const lists = await api.lists.list()
         if (ignore) return
         const today = lists.lists?.find((l: any) => l.name === 'Today')
@@ -79,8 +78,6 @@ export function CalendarPage() {
           if (ignore) return
           setTodayTasks(items.items || [])
         }
-
-        // Habits
         const d = await api.habits.list()
         if (ignore) return
         setHabits(d.habits || [])
@@ -90,14 +87,11 @@ export function CalendarPage() {
           try {
             const e = await api.habits.getEntries(h.id, selectedDate, selectedDate)
             if (!ignore && e.entries?.length > 0) ent[h.id] = e.entries[0].value
-          } catch { /* skip individual habit errors */ }
+          } catch {}
         }
         if (!ignore) setHabitEntries(ent)
-      } catch {
-        if (!ignore) { setTodayTasks([]); setHabits([]); setHabitEntries({}) }
-      }
-    }
-    run()
+      } catch { if (!ignore) { setTodayTasks([]); setHabits([]); setHabitEntries({}) } }
+    })()
     return () => { ignore = true }
   }, [selectedDate])
 
@@ -109,11 +103,7 @@ export function CalendarPage() {
     try {
       const lists = await api.lists.list()
       const today = lists.lists?.find((l: any) => l.name === 'Today')
-      if (today) {
-        setTodayListId(today.id)
-        const items = await api.lists.getItems(today.id)
-        setTodayTasks(items.items || [])
-      }
+      if (today) { setTodayListId(today.id); const items = await api.lists.getItems(today.id); setTodayTasks(items.items || []) }
     } catch { setTodayTasks([]) }
   }
 
@@ -123,7 +113,6 @@ export function CalendarPage() {
   }
 
   const toggleHabit = async (habitId: string, value: string) => {
-    // If clicking the already-selected value, clear it (set to empty by cycling to next)
     const current = habitEntries[habitId]
     const newVal = current === value ? '' : value
     if (newVal) {
@@ -132,46 +121,102 @@ export function CalendarPage() {
     }
   }
 
-  const addEvent = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!title.trim() || !adding) return
-    const et = endTime || `${String(parseInt(adding.startTime) + 1).padStart(2, '0')}:00`
-    await api.calendar.create({ title: title.trim(), date: adding.date, startTime: adding.startTime, endTime: et, ...(newNotes.trim() ? { notes: newNotes.trim() } : {}) })
-    setAdding(null); setTitle(''); setEndTime(''); setNewNotes(''); reloadEvents()
+  // ── Event CRUD ──────────────────────────────────────────────────────
+
+  const handleCreateEvent = async (data: any) => {
+    await api.calendar.create(data)
+    setFormModal(null)
+    reloadEvents()
   }
 
-  const handleDrop = async (date: string, hour: number) => {
-    setDropTarget(null)
-    if (draggingTask) {
-      const startTime = `${String(hour).padStart(2, '0')}:00`
-      const endTime = `${String(hour + 1).padStart(2, '0')}:00`
-      await api.calendar.create({ title: draggingTask.title, date, startTime, endTime })
-      setDraggingTask(null)
-      reloadEvents()
-    } else if (dragging) {
-      await api.calendar.update(dragging, { date, startTime: `${String(hour).padStart(2, '0')}:00` })
-      setDragging(null)
+  const handleEditEvent = (ev: any) => {
+    if (ev.isRecurring) {
+      setRecurrencePrompt({ action: 'edit', event: ev })
+    } else {
+      setFormModal({
+        mode: 'edit', event: ev,
+        initial: { title: ev.title, date: ev.date, startTime: ev.startTime, endTime: ev.endTime, color: ev.color, notes: ev.notes, recurrenceRule: ev.recurrenceRule },
+      })
+    }
+  }
+
+  const handleSaveEdit = async (data: any) => {
+    const ev = formModal?.event
+    if (!ev) return
+    const body: any = { ...data }
+    if (ev.isRecurring && ev._editMode) {
+      body.editMode = ev._editMode
+      body.occurrenceDate = ev.date
+    }
+    await api.calendar.update(ev.isRecurring ? (ev.seriesId || ev.id) : ev.id, body)
+    setFormModal(null)
+    reloadEvents()
+  }
+
+  const handleDeleteEvent = (ev: any, e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (ev.isRecurring) {
+      setRecurrencePrompt({ action: 'delete', event: ev })
+    } else {
+      doDelete(ev.id)
+    }
+  }
+
+  const doDelete = async (id: string, deleteMode?: string, occurrenceDate?: string) => {
+    await api.calendar.delete(id, deleteMode ? { deleteMode, occurrenceDate } : undefined)
+    reloadEvents()
+  }
+
+  const handleRecurrenceChoice = async (mode: 'single' | 'all') => {
+    const { action, event, pendingData } = recurrencePrompt!
+    setRecurrencePrompt(null)
+
+    if (action === 'delete') {
+      await doDelete(event.seriesId || event.id, mode, event.date)
+    } else if (action === 'edit') {
+      // Open form with editMode attached
+      setFormModal({
+        mode: 'edit',
+        event: { ...event, _editMode: mode },
+        initial: {
+          title: event.title, date: event.date, startTime: event.startTime,
+          endTime: event.endTime, color: event.color, notes: event.notes,
+          recurrenceRule: mode === 'all' ? event.recurrenceRule : undefined,
+        },
+      })
+    } else if (action === 'move' && pendingData) {
+      const { date, startTime } = pendingData
+      await api.calendar.update(event.seriesId || event.id, {
+        editMode: mode, occurrenceDate: event.date,
+        date, startTime,
+      })
       reloadEvents()
     }
   }
 
-  const deleteEvent = async (id: string) => {
-    await api.calendar.delete(id)
-    reloadEvents()
+  // ── Drag & Drop ─────────────────────────────────────────────────────
+
+  const handleDrop = async (date: string, hour: number) => {
+    setDropTarget(null)
+    const startTime = `${String(hour).padStart(2, '0')}:00`
+    if (draggingTask) {
+      const endTime = `${String(hour + 1).padStart(2, '0')}:00`
+      await api.calendar.create({ title: draggingTask.title, date, startTime, endTime })
+      setDraggingTask(null)
+      reloadEvents()
+    } else if (draggingEvent) {
+      if (draggingEvent.isRecurring) {
+        setRecurrencePrompt({ action: 'move', event: draggingEvent, pendingData: { date, startTime } })
+      } else {
+        await api.calendar.update(draggingEvent.id, { date, startTime })
+        reloadEvents()
+      }
+      setDraggingEvent(null)
+      setDragging(null)
+    }
   }
 
-  const openEventDetail = (ev: any, e: React.MouseEvent) => {
-    e.stopPropagation()
-    setEditingEvent(ev)
-    setEditNotes(ev.notes || '')
-  }
-
-  const saveNotes = async () => {
-    if (!editingEvent) return
-    await api.calendar.update(editingEvent.id, { notes: editNotes })
-    setEditingEvent(null)
-    reloadEvents()
-  }
+  // ── Helpers ─────────────────────────────────────────────────────────
 
   const eventsForDateHour = (date: string, hour: number) =>
     events.filter(e => e.date === date && e.startTime && parseInt(e.startTime) === hour)
@@ -181,15 +226,12 @@ export function CalendarPage() {
     const startM = parseInt(ev.startTime?.split(':')[1] || '0')
     const endH = ev.endTime ? parseInt(ev.endTime) : startH + 1
     const endM = parseInt(ev.endTime?.split(':')[1] || '0')
-    const topMin = startM
     const durationMin = (endH - startH) * 60 + (endM - startM)
     return {
-      top: `${(topMin / 60) * 48}px`,
+      top: `${(startM / 60) * 48}px`,
       height: `${Math.max((durationMin / 60) * 48, 20)}px`,
-      left: '2px',
-      right: '2px',
-      position: 'absolute' as const,
-      zIndex: 5,
+      left: '2px', right: '2px',
+      position: 'absolute' as const, zIndex: 5,
     }
   }
 
@@ -206,6 +248,8 @@ export function CalendarPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold">Calendar</h1>
         <div className="flex gap-2 items-center">
+          <button onClick={() => setFormModal({ mode: 'create' })}
+            className="px-3 py-1.5 bg-[var(--accent-sage)] text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">+ Event</button>
           <div className="flex border border-[var(--border)] rounded overflow-hidden text-sm">
             <button onClick={() => setView('daily')} className={`px-3 py-1 ${view === 'daily' ? 'bg-[var(--accent-sage)] text-white' : ''}`}>Day</button>
             <button onClick={() => setView('weekly')} className={`px-3 py-1 ${view === 'weekly' ? 'bg-[var(--accent-sage)] text-white' : ''}`}>Week</button>
@@ -215,23 +259,7 @@ export function CalendarPage() {
           <button onClick={nav.next} className="px-3 py-1 border border-[var(--border)] rounded text-sm">→</button>
         </div>
       </div>
-      {adding && (
-        <form onSubmit={addEvent} className="bg-[var(--bg-card)] p-4 rounded-lg border border-[var(--border)] mb-4 space-y-2">
-          <div className="flex gap-2 items-end">
-            <div className="flex-1">
-              <label className="text-xs text-[var(--text-muted)]">{adding.date} at {adding.startTime}</label>
-              <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Event title..." autoFocus
-                className="w-full px-3 py-2 border border-[var(--border)] rounded-lg outline-none focus:border-[var(--accent-sage)]" />
-            </div>
-            <input value={endTime} onChange={e => setEndTime(e.target.value)} placeholder="End (HH:mm)"
-              className="w-28 px-3 py-2 border border-[var(--border)] rounded-lg outline-none" />
-            <button type="submit" className="px-4 py-2 bg-[var(--accent-sage)] text-white rounded-lg text-sm">Add</button>
-            <button type="button" onClick={() => { setAdding(null); setNewNotes('') }} className="px-3 py-2 text-sm text-[var(--text-muted)]">Cancel</button>
-          </div>
-          <textarea value={newNotes} onChange={e => setNewNotes(e.target.value)} placeholder="Notes"
-            rows={2} className="w-full px-3 py-2 border border-[var(--border)] rounded-lg outline-none focus:border-[var(--accent-sage)] text-sm resize-none" />
-        </form>
-      )}
+
       <div className="flex gap-4">
         {/* Calendar grid */}
         <div className="flex-1 overflow-x-auto min-w-0">
@@ -256,27 +284,29 @@ export function CalendarPage() {
               </div>
               {dates.map(d => (
                 <div key={`${d}-${h}`}
-                  onClick={() => setAdding({ date: d, startTime: `${String(h).padStart(2, '0')}:00` })}
+                  onClick={() => setFormModal({ mode: 'create', initial: { date: d, startTime: `${String(h).padStart(2, '0')}:00`, endTime: `${String(h + 1).padStart(2, '0')}:00` } })}
                   onDragOver={e => { e.preventDefault(); dragTarget.current = { date: d, hour: h }; setDropTarget(`${d}-${h}`) }}
                   onDragLeave={() => setDropTarget(null)}
                   onDrop={() => handleDrop(d, h)}
                   className={`border-t border-l border-[var(--border)] min-h-[48px] p-0.5 cursor-pointer relative transition-colors
-                    ${dropTarget === `${d}-${h}` && draggingTask ? 'bg-[var(--accent-sage-light)] ring-1 ring-inset ring-[var(--accent-sage)]' : d === todayStr ? 'bg-[var(--accent-sage-light)]' : 'hover:bg-[var(--bg-surface)]'}`}>
+                    ${dropTarget === `${d}-${h}` && (draggingTask || draggingEvent) ? 'bg-[var(--accent-sage-light)] ring-1 ring-inset ring-[var(--accent-sage)]' : d === todayStr ? 'bg-[var(--accent-sage-light)]' : 'hover:bg-[var(--bg-surface)]'}`}>
                   {eventsForDateHour(d, h).map(ev => (
-                    <div key={ev.id}
+                    <div key={ev.id + '-' + ev.date}
                       draggable
-                      onDragStart={(e) => { e.stopPropagation(); setDragging(ev.id) }}
-                      onDragEnd={() => setDragging(null)}
-                      onClick={(e) => openEventDetail(ev, e)}
+                      onDragStart={(e) => { e.stopPropagation(); setDragging(ev.id); setDraggingEvent(ev) }}
+                      onDragEnd={() => { setDragging(null); setDraggingEvent(null) }}
+                      onClick={(e) => { e.stopPropagation(); handleEditEvent(ev) }}
                       style={{ ...getEventStyle(ev), ...(ev.color ? { backgroundColor: ev.color + '33', color: ev.color } : {}) }}
                       className={`text-xs px-1.5 py-0.5 rounded cursor-grab active:cursor-grabbing group/ev overflow-hidden ${!ev.color ? 'bg-[var(--accent-blue-light)] text-[var(--accent-blue)]' : ''}`}>
-                      <span className="truncate block">{ev.title}</span>
+                      <span className="truncate block">
+                        {ev.isRecurring && <span className="mr-0.5">🔁</span>}
+                        {ev.title}
+                      </span>
                       {ev.notes && <span className="ml-1 opacity-50">✎</span>}
-                      <button onClick={(e) => { e.stopPropagation(); deleteEvent(ev.id) }}
+                      <button onClick={(e) => handleDeleteEvent(ev, e)}
                         className="absolute -top-1 -right-1 w-4 h-4 bg-[var(--bg-card)] border border-[var(--border)] rounded-full text-[8px] text-[var(--danger)] opacity-0 group-hover/ev:opacity-100 flex items-center justify-center">✕</button>
                     </div>
                   ))}
-                  {/* Current time indicator */}
                   {d === todayStr && h === currentHour && (
                     <div className="absolute left-0 right-0 border-t-2 border-[var(--accent-terracotta)] z-10 pointer-events-none"
                       style={{ top: `${(currentMinute / 60) * 100}%` }}>
@@ -290,9 +320,8 @@ export function CalendarPage() {
         </div>
         </div>
 
-        {/* Today's tasks panel — aligned with 6am line */}
+        {/* Side panels */}
         <div className={`${view === 'daily' ? 'w-80' : 'w-56'} flex-shrink-0 hidden lg:block`}>
-          {/* Spacer matching the calendar header row height */}
           <div className="h-[38px]"></div>
           <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden">
             <div className="px-4 py-2.5 border-b border-[var(--border)] bg-[var(--bg)]">
@@ -313,24 +342,19 @@ export function CalendarPage() {
                     <span className={`text-sm flex-1 select-none ${item.task.done ? 'line-through text-[var(--text-muted)]' : ''}`}>
                       {item.task.title}
                     </span>
-                    {!item.task.done && (
-                      <span className="text-[var(--text-faint)] opacity-0 group-hover:opacity-100 text-xs">⠿</span>
-                    )}
+                    {!item.task.done && <span className="text-[var(--text-faint)] opacity-0 group-hover:opacity-100 text-xs">⠿</span>}
                   </div>
                 )
               ))}
-              {todayTasks.length === 0 && (
-                <p className="text-xs text-[var(--text-muted)] py-2">No tasks for today</p>
-              )}
+              {todayTasks.length === 0 && <p className="text-xs text-[var(--text-muted)] py-2">No tasks for today</p>}
             </div>
           </div>
 
-          {/* Habits panel */}
           <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] overflow-hidden mt-3">
             <div className="px-4 py-2.5 border-b border-[var(--border)] bg-[var(--bg)]">
               <h3 className="font-semibold text-xs flex items-center justify-between">
                 <span className="flex items-center gap-1.5">✅ Habits</span>
-                <span className="text-[10px] text-[var(--text-muted)] font-normal">{selectedDate === new Date().toISOString().slice(0, 10) ? 'today' : selectedDate.slice(5)}</span>
+                <span className="text-[10px] text-[var(--text-muted)] font-normal">{selectedDate === todayStr ? 'today' : selectedDate.slice(5)}</span>
               </h3>
             </div>
             <div className="p-3 space-y-2">
@@ -355,44 +379,31 @@ export function CalendarPage() {
                   </div>
                 )
               })}
-              {habits.length === 0 && (
-                <p className="text-xs text-[var(--text-muted)] py-2">No habits tracked</p>
-              )}
+              {habits.length === 0 && <p className="text-xs text-[var(--text-muted)] py-2">No habits tracked</p>}
             </div>
           </div>
 
-          {/* Daily notes panel — daily view only */}
           {view === 'daily' && <DailyNotePanel date={selectedDate} />}
         </div>
       </div>
 
-      {/* Event detail modal for notes */}
-      {editingEvent && (
-        <div className="fixed inset-0 bg-black/30 z-50 flex items-center justify-center" onClick={() => saveNotes()}>
-          <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border)] shadow-lg w-96 max-w-[90vw]" onClick={e => e.stopPropagation()}>
-            <div className="px-4 py-3 border-b border-[var(--border)] flex items-center justify-between">
-              <h3 className="font-semibold text-sm">{editingEvent.title}</h3>
-              <span className="text-xs text-[var(--text-muted)]">
-                {editingEvent.startTime}–{editingEvent.endTime}
-              </span>
-            </div>
-            <div className="p-4">
-              <label className="text-xs text-[var(--text-muted)] mb-1 block">Notes</label>
-              <textarea
-                value={editNotes}
-                onChange={e => setEditNotes(e.target.value)}
-                placeholder="Add notes..."
-                autoFocus
-                rows={4}
-                className="w-full px-3 py-2 border border-[var(--border)] rounded-lg outline-none focus:border-[var(--accent-sage)] text-sm resize-none"
-              />
-            </div>
-            <div className="px-4 py-3 border-t border-[var(--border)] flex justify-end gap-2">
-              <button onClick={() => { setEditingEvent(null) }} className="px-3 py-1.5 text-sm text-[var(--text-muted)]">Cancel</button>
-              <button onClick={saveNotes} className="px-4 py-1.5 bg-[var(--accent-sage)] text-white rounded-lg text-sm">Save</button>
-            </div>
-          </div>
-        </div>
+      {/* Event form modal */}
+      {formModal && (
+        <EventFormModal
+          mode={formModal.mode}
+          initial={formModal.initial}
+          onSave={formModal.mode === 'create' ? handleCreateEvent : handleSaveEdit}
+          onCancel={() => setFormModal(null)}
+        />
+      )}
+
+      {/* Recurrence prompt */}
+      {recurrencePrompt && (
+        <RecurrencePrompt
+          action={recurrencePrompt.action}
+          onChoice={handleRecurrenceChoice}
+          onCancel={() => setRecurrencePrompt(null)}
+        />
       )}
     </div>
   )

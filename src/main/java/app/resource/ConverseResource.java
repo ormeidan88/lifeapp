@@ -379,12 +379,13 @@ public class ConverseResource {
         t.add(tool("list_calendar_events", "List calendar events in a date range",
                 props("from", "Start date YYYY-MM-DD", "to", "End date YYYY-MM-DD"),
                 req("from", "to")));
-        t.add(tool("add_calendar_event", "Add a new calendar event",
+        t.add(tool("add_calendar_event", "Add a new calendar event, optionally recurring",
                 props("title", "Event title",
                         "date", "Date YYYY-MM-DD",
                         "startTime", "Optional start time HH:MM",
                         "endTime", "Optional end time HH:MM",
-                        "color", "Optional color code"),
+                        "color", "Optional color code",
+                        "recurrenceRule", "Optional JSON recurrence rule: {\"freq\":\"DAILY|WEEKLY|MONTHLY|CUSTOM\",\"interval\":1,\"daysOfWeek\":[\"MON\"],\"monthlyType\":\"DATE|WEEKDAY\",\"unit\":\"DAY|WEEK|MONTH\",\"endDate\":\"YYYY-MM-DD\"}"),
                 req("title", "date")));
         t.add(tool("update_calendar_event", "Update an existing calendar event",
                 props("id", "The event ID",
@@ -605,6 +606,7 @@ public class ConverseResource {
                     if (p.containsKey("startTime")) body.put("startTime", p.get("startTime"));
                     if (p.containsKey("endTime")) body.put("endTime", p.get("endTime"));
                     if (p.containsKey("color")) body.put("color", p.get("color"));
+                    if (p.containsKey("recurrenceRule")) body.put("recurrenceRule", p.get("recurrenceRule"));
                     yield post("/api/calendar/events", body);
                 }
                 case "update_calendar_event" -> {
