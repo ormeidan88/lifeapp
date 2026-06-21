@@ -73,6 +73,18 @@ export const api = {
     delete: (id: string) => request(`/pages/${id}`, { method: 'DELETE' }),
     search: (q: string) => request(`/pages/search?q=${encodeURIComponent(q)}`),
   },
+  thoughts: {
+    list: (params?: { kind?: string; parentThoughtId?: string }) => {
+      const q = new URLSearchParams(params as any).toString()
+      return request(`/thoughts?${q}`)
+    },
+    get: (id: string) => request(`/thoughts/${id}`),
+    create: (body: any) => request('/thoughts', { method: 'POST', body: JSON.stringify(body) }),
+    createDaily: () => request('/thoughts', { method: 'POST', body: JSON.stringify({ kind: 'daily' }) }),
+    update: (id: string, body: any) => request(`/thoughts/${id}`, { method: 'PATCH', body: JSON.stringify(body) }),
+    delete: (id: string) => request(`/thoughts/${id}`, { method: 'DELETE' }),
+    search: (q: string) => request(`/thoughts/search?q=${encodeURIComponent(q)}`),
+  },
   habits: {
     list: () => request('/habits'),
     create: (name: string, color?: string) => request('/habits', { method: 'POST', body: JSON.stringify({ name, color }) }),

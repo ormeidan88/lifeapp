@@ -65,9 +65,9 @@ export function PageEditor({ content, onUpdate }: Props) {
     e.target.value = ''
   }
 
-  const insertPageLink = (pageId: string, title: string) => {
+  const insertPageLink = (pageId: string, title: string, kind: 'page' | 'thought' = 'page') => {
     if (!editor) return
-    editor.chain().focus().insertContent({ type: 'pageLink', attrs: { pageId, title } }).run()
+    editor.chain().focus().insertContent({ type: 'pageLink', attrs: { pageId, title, kind } }).run()
     setShowPagePicker(false)
   }
 

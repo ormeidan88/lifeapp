@@ -6,6 +6,7 @@ import { InboxPage } from './pages/InboxPage'
 import { ProjectsPage } from './pages/ProjectsPage'
 import { ProjectDetailPage } from './pages/ProjectDetailPage'
 import { PagesPage } from './pages/PagesPage'
+import { ThoughtsPage } from './pages/ThoughtsPage'
 import { ListsPage } from './pages/ListsPage'
 import { HabitsPage } from './pages/HabitsPage'
 import { MemorizePage } from './pages/MemorizePage'
@@ -18,6 +19,7 @@ export default function App() {
   const [page, setPage] = useState('inbox')
   const [projectId, setProjectId] = useState<string | null>(null)
   const [pageId, setPageId] = useState<string | null>(null)
+  const [thoughtId, setThoughtId] = useState<string | null>(null)
 
   // Listen for page link navigation from TipTap editor
   useEffect(() => {
@@ -30,6 +32,19 @@ export default function App() {
     }
     window.addEventListener('navigate-page', handler)
     return () => window.removeEventListener('navigate-page', handler)
+  }, [])
+
+  // Listen for thought link navigation from TipTap editor
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail
+      if (detail?.thoughtId) {
+        setThoughtId(detail.thoughtId)
+        setPage('thought-detail')
+      }
+    }
+    window.addEventListener('navigate-thought', handler)
+    return () => window.removeEventListener('navigate-thought', handler)
   }, [])
 
   if (authenticated === null) return <div className="min-h-screen flex items-center justify-center text-[var(--text-muted)]">Loading...</div>
@@ -45,6 +60,8 @@ export default function App() {
       case 'lists': return <ListsPage />
       case 'pages': return <PagesPage externalPageId={pageId} onClearExternal={() => setPageId(null)} />
       case 'page-detail': return <PagesPage externalPageId={pageId} onClearExternal={() => { setPageId(null); setPage('pages') }} />
+      case 'thoughts': return <ThoughtsPage externalThoughtId={thoughtId} onClearExternal={() => setThoughtId(null)} />
+      case 'thought-detail': return <ThoughtsPage externalThoughtId={thoughtId} onClearExternal={() => { setThoughtId(null); setPage('thoughts') }} />
       case 'habits': return <HabitsPage />
       case 'memorize': return <MemorizePage />
       case 'books': return <BooksPage />
@@ -56,8 +73,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen">
-      <Sidebar current={page === 'page-detail' ? 'pages' : page} onNavigate={(p) => { setPageId(null); setPage(p) }} onLogout={logout} />
-      <BottomNav current={page === 'page-detail' ? 'pages' : page} onNavigate={(p) => { setPageId(null); setPage(p) }} />
+      <Sidebar current={page === 'page-detail' ? 'pages' : page === 'thought-detail' ? 'thoughts' : page} onNavigate={(p) => { setPageId(null); setThoughtId(null); setPage(p) }} onLogout={logout} />
+      <BottomNav current={page === 'page-detail' ? 'pages' : page === 'thought-detail' ? 'thoughts' : page} onNavigate={(p) => { setPageId(null); setThoughtId(null); setPage(p) }} />
       <main className="md:ml-48 px-6 py-7 pb-24 md:pb-8">
         <div key={page} className="max-w-6xl mx-auto w-full page-transition">
           {renderPage()}

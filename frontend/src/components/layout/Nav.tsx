@@ -34,6 +34,13 @@ function NavIcon({ name }: { name: string }) {
         <path d="M5.5 7h5M5.5 9.5h3.5" />
       </svg>
     ),
+    thoughts: (
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M5 11a4 4 0 113.5-6 3 3 0 013.7 3.7A3 3 0 0110 12H6a2 2 0 01-1-1z" />
+        <circle cx="3.5" cy="13.5" r=".9" fill="currentColor" stroke="none" />
+        <circle cx="1.5" cy="15" r=".5" fill="currentColor" stroke="none" />
+      </svg>
+    ),
     habits: (
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="8" cy="8" r="5.5" />
@@ -79,6 +86,7 @@ const labels: Record<string, string> = {
   projects: 'Projects',
   lists: 'Lists',
   pages: 'Pages',
+  thoughts: 'Thoughts',
   habits: 'Habits',
   memorize: 'Memorize',
   books: 'Books',
@@ -86,7 +94,7 @@ const labels: Record<string, string> = {
   converse: 'Converse',
 }
 
-const items = ['inbox', 'projects', 'lists', 'pages', 'habits', 'memorize', 'books', 'calendar', 'converse']
+const items = ['inbox', 'projects', 'lists', 'pages', 'thoughts', 'habits', 'memorize', 'books', 'calendar', 'converse']
 
 type Props = { current: string; onNavigate: (page: string) => void; onLogout?: () => void }
 

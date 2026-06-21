@@ -45,6 +45,9 @@ public class TableInitializer {
                         gsi("parentPageId-index", "parentPageId", "pageId")
                 ));
         createIfMissing(existing, "page_content", "pageId", "version", null);
+        createIfMissing(existing, "thoughts", "userId", "thoughtId",
+                List.of(gsi("parentThoughtId-index", "parentThoughtId", "thoughtId")));
+        createIfMissing(existing, "thought_content", "thoughtId", "version", null);
         createIfMissing(existing, "habits", "userId", "habitId", null);
         createIfMissing(existing, "habit_entries", "habitId", "date", null);
         createIfMissing(existing, "decks", "userId", "deckId", null);

@@ -7,19 +7,25 @@ import { api } from '../../api/client'
 function PageLinkView({ node, editor }: any) {
   const [title, setTitle] = useState(node.attrs.title || 'Loading...')
   const pageId = node.attrs.pageId
+  const kind = node.attrs.kind || 'page'
 
   useEffect(() => {
     // Resolve title at render time from API
     if (pageId) {
-      api.pages.get(pageId).then(p => {
+      const fetcher = kind === 'thought' ? api.thoughts.get(pageId) : api.pages.get(pageId)
+      fetcher.then((p: any) => {
         if (p?.title) setTitle(p.title)
-      }).catch(() => setTitle('Unknown page'))
+      }).catch(() => setTitle(kind === 'thought' ? 'Unknown thought' : 'Unknown page'))
     }
-  }, [pageId])
+  }, [pageId, kind])
 
   const handleClick = () => {
     // Dispatch a custom event the app can listen to for navigation
-    window.dispatchEvent(new CustomEvent('navigate-page', { detail: { pageId } }))
+    if (kind === 'thought') {
+      window.dispatchEvent(new CustomEvent('navigate-thought', { detail: { thoughtId: pageId } }))
+    } else {
+      window.dispatchEvent(new CustomEvent('navigate-page', { detail: { pageId } }))
+    }
   }
 
   return (
@@ -29,7 +35,7 @@ function PageLinkView({ node, editor }: any) {
         className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-[var(--bg-surface)] rounded cursor-pointer hover:bg-[var(--border)] text-sm"
         contentEditable={false}
       >
-        📄 {title}
+        {kind === 'thought' ? '💭' : '📄'} {title}
       </span>
     </NodeViewWrapper>
   )
@@ -46,6 +52,7 @@ export const PageLink = Node.create({
     return {
       pageId: { default: null },
       title: { default: 'Untitled' },
+      kind: { default: 'page' },
     }
   },
 

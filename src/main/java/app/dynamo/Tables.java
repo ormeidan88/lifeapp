@@ -39,6 +39,12 @@ public class Tables {
     @Produces @Named("pageContent")
     DynamoDbTable<PageContent> pageContent() { return enhanced.table("page_content", TableSchema.fromBean(PageContent.class)); }
 
+    @Produces @Named("thoughts")
+    DynamoDbTable<Thought> thoughts() { return enhanced.table("thoughts", TableSchema.fromBean(Thought.class)); }
+
+    @Produces @Named("thoughtContent")
+    DynamoDbTable<ThoughtContent> thoughtContent() { return enhanced.table("thought_content", TableSchema.fromBean(ThoughtContent.class)); }
+
     @Produces @Named("habits")
     DynamoDbTable<Habit> habits() { return enhanced.table("habits", TableSchema.fromBean(Habit.class)); }
 

@@ -34,6 +34,16 @@ describe('api.pages', () => {
   it('delete', async () => { ok204(); await api.pages.delete('p1') })
 })
 
+describe('api.thoughts', () => {
+  it('list', async () => { ok({ thoughts: [] }); await api.thoughts.list({ kind: 'daily' }) })
+  it('get', async () => { ok({ id: '1', content: {} }); await api.thoughts.get('t1') })
+  it('create', async () => { ok({ id: '1' }, 201); await api.thoughts.create({ kind: 'subject', title: 'T' }) })
+  it('createDaily', async () => { ok({ id: '1' }, 201); await api.thoughts.createDaily() })
+  it('update', async () => { ok({ id: '1' }); await api.thoughts.update('t1', { title: 'New' }) })
+  it('delete', async () => { ok204(); await api.thoughts.delete('t1') })
+  it('search', async () => { ok({ thoughts: [] }); await api.thoughts.search('test') })
+})
+
 describe('api.habits', () => {
   it('list', async () => { ok({ habits: [] }); await api.habits.list() })
   it('create', async () => { ok({ id: '1' }, 201); await api.habits.create('Meditate') })
