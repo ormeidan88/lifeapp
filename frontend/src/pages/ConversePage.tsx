@@ -406,13 +406,13 @@ export function ConversePage() {
         <button
           onClick={send}
           disabled={streaming || !input.trim()}
-          className="flex-none w-10 h-10 rounded-xl flex items-center justify-center transition-all"
+          className="flex-none w-10 h-10 rounded-xl flex items-center justify-center transition-[background-color,color] duration-150"
           style={{
             background: streaming || !input.trim() ? 'var(--border)' : 'var(--accent-sage)',
             color: streaming || !input.trim() ? 'var(--text-muted)' : 'white',
           }}
         >
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4 ml-px">
             <path d="M13 8L3 2.5l2.5 5.5L3 13.5z" />
           </svg>
         </button>

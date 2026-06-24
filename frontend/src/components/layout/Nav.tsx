@@ -121,7 +121,7 @@ export function Sidebar({ current, onNavigate, onLogout, overdueCount }: Props) 
             <button
               key={item}
               onClick={() => onNavigate(item)}
-              className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm transition-all w-full text-left"
+              className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm transition-colors w-full text-left"
               style={{
                 color: active ? 'var(--text)' : 'var(--text-muted)',
                 background: active ? 'rgba(126, 155, 106, 0.13)' : 'transparent',
@@ -146,7 +146,7 @@ export function Sidebar({ current, onNavigate, onLogout, overdueCount }: Props) 
         <div className="h-px mx-2 mb-3" style={{ background: 'var(--border-subtle)' }} />
         <button
           onClick={onLogout}
-          className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm w-full text-left transition-all"
+          className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm w-full text-left transition-colors"
           style={{ color: 'var(--text-muted)' }}
           onMouseEnter={e => {
             ;(e.currentTarget as HTMLElement).style.color = 'var(--danger)'
@@ -181,7 +181,7 @@ export function BottomNav({ current, onNavigate }: Props) {
           <button
             key={item}
             onClick={() => onNavigate(item)}
-            className="flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg transition-all min-w-[44px]"
+            className="flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg transition-colors min-w-[44px]"
             style={{ color: active ? 'var(--accent-sage)' : 'var(--text-muted)' }}
           >
             <span className="w-5 h-5 flex items-center justify-center">

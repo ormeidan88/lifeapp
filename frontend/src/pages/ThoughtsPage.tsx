@@ -135,7 +135,7 @@ export function ThoughtsPage({ externalThoughtId, onClearExternal }: Props) {
 
   const card = (t: any) => (
     <div key={t.id} onClick={() => openThought(t.id)}
-      className="bg-[var(--bg-card)] p-4 rounded-xl border border-[var(--border)] cursor-pointer transition-all"
+      className="bg-[var(--bg-card)] p-4 rounded-xl border border-[var(--border)] cursor-pointer transition-[box-shadow] duration-150"
       style={{ boxShadow: 'var(--shadow-card)' }}
       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card-hover)' }}
       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card)' }}>

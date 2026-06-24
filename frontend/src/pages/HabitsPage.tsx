@@ -135,7 +135,7 @@ export function HabitsPage() {
                 return (
                   <div key={d} className={`flex-1 text-center py-2 ${isToday ? 'bg-[var(--accent-sage-light)]' : ''}`}>
                     <div className={`text-[10px] ${isToday ? 'text-[var(--accent-sage)] font-bold' : 'text-[var(--text-muted)]'}`}>{weekday}</div>
-                    <div className={`text-sm font-medium ${isToday ? 'text-[var(--accent-sage)]' : 'text-[var(--text)]'}`}>{day}</div>
+                    <div className={`text-sm font-medium tabular-nums ${isToday ? 'text-[var(--accent-sage)]' : 'text-[var(--text)]'}`}>{day}</div>
                   </div>
                 )
               })}
@@ -152,7 +152,7 @@ export function HabitsPage() {
                   <button onClick={() => deleteHabit(h.id)}
                     className="text-[var(--text-muted)] hover:text-[var(--danger)] text-xs opacity-0 group-hover:opacity-100 ml-1">✕</button>
                 </div>
-                <span className="text-[10px] text-[var(--text-muted)]">
+                <span className="text-[10px] text-[var(--text-muted)] tabular-nums">
                   <span className="font-semibold text-[var(--text)]">{h.currentStreak}</span> day streak · Best: {h.longestStreak}
                 </span>
               </div>

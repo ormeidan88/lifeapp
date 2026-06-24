@@ -353,7 +353,7 @@ export function CalendarPage() {
           {/* Time grid */}
           {hours.map(h => (
             <div key={`row-${h}`} className="contents">
-              <div className="text-xs text-[var(--text-muted)] p-1 text-right pr-2 border-t border-[var(--border)]">
+              <div className="text-xs text-[var(--text-muted)] p-1 text-right pr-2 border-t border-[var(--border)] tabular-nums">
                 {h}:00
               </div>
               {dates.map(d => (

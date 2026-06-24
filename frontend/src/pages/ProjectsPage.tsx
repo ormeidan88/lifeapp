@@ -32,7 +32,7 @@ export function ProjectsPage({ onOpen }: { onOpen: (id: string) => void }) {
           <h1 className="text-2xl font-semibold">Projects</h1>
           {projects.length > 0 && <p className="text-xs text-[var(--text-muted)] mt-0.5">{projects.filter(p => p.status === 'IN_PROGRESS').length} active · {projects.length} total</p>}
         </div>
-        <button onClick={() => setAdding(true)} className="px-3 py-1.5 bg-[var(--accent-sage)] text-white rounded-lg text-sm font-medium hover:opacity-90 active:scale-95 transition-all">+ New</button>
+        <button onClick={() => setAdding(true)} className="px-3 py-1.5 bg-[var(--accent-sage)] text-white rounded-lg text-sm font-medium hover:opacity-90 active:scale-[0.96] transition-[opacity,scale]">+ New</button>
       </div>
       {adding && (
         <form onSubmit={add} className="mb-5 flex gap-2">
@@ -51,7 +51,7 @@ export function ProjectsPage({ onOpen }: { onOpen: (id: string) => void }) {
             <div
               key={p.id}
               onClick={() => onOpen(p.id)}
-              className={`p-4 rounded-xl border border-[var(--border)] border-l-4 ${s.border} cursor-pointer transition-all active:scale-[0.98]`}
+              className={`p-4 rounded-xl border border-[var(--border)] border-l-4 ${s.border} cursor-pointer transition-[box-shadow,transform,scale] duration-150 active:scale-[0.96]`}
               style={{
                 background: 'var(--bg-card)',
                 boxShadow: 'var(--shadow-card)',

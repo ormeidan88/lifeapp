@@ -123,7 +123,7 @@ export function EventFormModal({ initial, onSave, onCancel, mode }: Props) {
             <span className="text-xs text-[var(--text-muted)]">Color</span>
             {['', '#7B9EB2', '#9BB07B', '#C4956A', '#B07BA5', '#6A9EC4'].map(c => (
               <button key={c} type="button" onClick={() => setColor(c)}
-                className={`w-5 h-5 rounded-full transition-all ${color === c ? 'ring-2 ring-[var(--accent-sage)] ring-offset-1' : 'hover:scale-110'}`}
+                className={`w-5 h-5 rounded-full transition-[box-shadow,transform] duration-150 ${color === c ? 'ring-2 ring-[var(--accent-sage)] ring-offset-1' : 'hover:scale-110'}`}
                 style={{ backgroundColor: c || 'var(--bg-surface)', border: c ? 'none' : '1px solid var(--border)' }} />
             ))}
           </div>

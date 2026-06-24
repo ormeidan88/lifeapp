@@ -63,7 +63,7 @@ export function InboxPage() {
         {items.map(item => (
           <div
             key={item.id}
-            className="flex items-center px-4 py-3 rounded-xl border border-[var(--border)] group transition-all"
+            className="flex items-center px-4 py-3 rounded-xl border border-[var(--border)] group transition-[box-shadow] duration-150"
             style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-xs)' }}
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-sm)' }}
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-xs)' }}

@@ -105,10 +105,10 @@ export function MemorizePage() {
     return (
       <div className="max-w-xl mx-auto text-center">
         <button onClick={goBack} className="text-[var(--text-muted)] hover:text-[var(--text)] text-sm mb-4 block">← Back</button>
-        <p className="text-sm text-[var(--text-muted)] mb-4">{cardIdx + 1} / {cards.length}</p>
+        <p className="text-sm text-[var(--text-muted)] mb-4 tabular-nums">{cardIdx + 1} / {cards.length}</p>
         {/* Progress bar */}
         <div className="w-full h-1 bg-[var(--bg-surface)] rounded-full mb-4 overflow-hidden">
-          <div className="h-full bg-[var(--accent-sage)] rounded-full transition-all duration-300" style={{ width: `${((cardIdx + 1) / cards.length) * 100}%` }} />
+          <div className="h-full bg-[var(--accent-sage)] rounded-full transition-[width] duration-300 ease-out" style={{ width: `${((cardIdx + 1) / cards.length) * 100}%` }} />
         </div>
         {/* 3-D flip card */}
         <div
@@ -152,7 +152,7 @@ export function MemorizePage() {
               { key: 'EASY', label: 'Easy', color: 'border-[var(--accent-blue)] text-[var(--accent-blue)] hover:bg-[var(--accent-blue-light)]' },
             ].map(r => (
               <button key={r.key} onClick={() => rate(r.key)}
-                className={`px-5 py-2.5 rounded-xl border-2 text-sm font-medium transition-all active:scale-95 ${r.color}`}>{r.label}</button>
+                className={`px-5 py-2.5 rounded-xl border-2 text-sm font-medium transition-[background-color,scale] duration-150 active:scale-[0.96] ${r.color}`}>{r.label}</button>
             ))}
           </div>
         ) : (
@@ -232,7 +232,7 @@ export function MemorizePage() {
         {decks.map(d => (
           <div
             key={d.id}
-            className="p-5 rounded-xl border border-[var(--border)] group transition-all"
+            className="p-5 rounded-xl border border-[var(--border)] group transition-[box-shadow,transform] duration-150"
             style={{ background: 'var(--bg-card)', boxShadow: 'var(--shadow-card)' }}
             onMouseEnter={e => {
               ;(e.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-card-hover)'
@@ -248,7 +248,7 @@ export function MemorizePage() {
               <button onClick={() => deleteDeck(d.id)}
                 className="text-[var(--text-muted)] hover:text-[var(--danger)] text-xs opacity-0 group-hover:opacity-100">✕</button>
             </div>
-            <p className="text-sm text-[var(--text-muted)] mb-3">{d.cardCount} cards · {d.dueCount} due</p>
+            <p className="text-sm text-[var(--text-muted)] mb-3 tabular-nums">{d.cardCount} cards · {d.dueCount} due</p>
             <div className="flex gap-2">
               <button onClick={() => startReview(d.id)}
                 disabled={d.dueCount === 0}
