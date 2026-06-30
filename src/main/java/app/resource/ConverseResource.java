@@ -338,14 +338,52 @@ public class ConverseResource {
                 props("id", "The page ID"), req("id")));
         t.add(tool("search_pages", "Search pages by title keyword",
                 props("q", "Search query"), req("q")));
-        t.add(tool("create_page", "Create a new page",
+        t.add(tool("create_page", "Create a new page, optionally with a Markdown body. Markdown (headings, lists, bold, italic, code) is converted to formatted rich text",
                 props("title", "Page title",
                         "parentPageId", "Optional parent page ID",
                         "ownerType", "Owner type: standalone, project, or book",
-                        "ownerId", "Owner ID"),
+                        "ownerId", "Owner ID",
+                        "content", "Optional page body as Markdown (headings, lists, bold, italic, code) — becomes formatted rich text"),
                 req()));
         t.add(tool("update_page", "Update a page's title",
                 props("id", "The page ID", "title", "New title"), req("id")));
+        t.add(tool("set_page_content", "Replace a page's entire body with Markdown content (overwrites existing body). Markdown becomes formatted rich text",
+                props("id", "The page ID",
+                        "markdown", "Page body as Markdown"),
+                req("id", "markdown")));
+        t.add(tool("append_page_content", "Append Markdown content to the end of a page's existing body (keeps current content). Markdown becomes formatted rich text",
+                props("id", "The page ID",
+                        "markdown", "Markdown to append to the end of the page"),
+                req("id", "markdown")));
+
+        // Thoughts
+        t.add(tool("list_thoughts", "List thoughts, optionally filtered by kind (subject or daily) or by parent thought",
+                props("kind", "Optional filter: subject or daily",
+                        "parentThoughtId", "Optional parent thought ID"),
+                req()));
+        t.add(tool("get_thought", "Get a thought and its full content by ID",
+                props("id", "The thought ID"), req("id")));
+        t.add(tool("search_thoughts", "Search thoughts by title keyword",
+                props("q", "Search query"), req("q")));
+        t.add(tool("create_thought", "Create a new thought, optionally with a Markdown body. Markdown becomes formatted rich text",
+                props("title", "Thought title",
+                        "kind", "Kind: subject (default) or daily",
+                        "parentThoughtId", "Optional parent thought ID",
+                        "content", "Optional body as Markdown (headings, lists, bold, italic, code)"),
+                req()));
+        t.add(tool("update_thought", "Update a thought's title and/or body. Providing content replaces the existing body (Markdown becomes formatted rich text)",
+                props("id", "The thought ID",
+                        "title", "New title",
+                        "content", "New body as Markdown (replaces the existing body)"),
+                req("id")));
+        t.add(tool("set_thought_content", "Replace a thought's entire body with Markdown content (overwrites existing body). Markdown becomes formatted rich text",
+                props("id", "The thought ID",
+                        "markdown", "Body as Markdown"),
+                req("id", "markdown")));
+        t.add(tool("append_thought_content", "Append Markdown content to the end of a thought's existing body (keeps current content). Markdown becomes formatted rich text",
+                props("id", "The thought ID",
+                        "markdown", "Markdown to append to the end of the thought"),
+                req("id", "markdown")));
 
         // Habits
         t.add(tool("list_habits", "List all habits with current and longest streaks",
@@ -420,6 +458,16 @@ public class ConverseResource {
         t.add(tool("search_daily_notes", "Search daily notes by keyword",
                 props("query", "Search text to find in notes"),
                 req("query")));
+        t.add(tool("get_daily_note", "Get the daily journal note for a single date",
+                props("date", "Date YYYY-MM-DD"), req("date")));
+        t.add(tool("set_daily_note", "Set (replace) the daily journal note for a date with Markdown content (overwrites any existing note). Markdown becomes formatted rich text",
+                props("date", "Date YYYY-MM-DD",
+                        "markdown", "Journal entry as Markdown"),
+                req("date", "markdown")));
+        t.add(tool("append_daily_note", "Append Markdown content to the daily journal note for a date (keeps the existing entry). Markdown becomes formatted rich text",
+                props("date", "Date YYYY-MM-DD",
+                        "markdown", "Markdown to append to the day's note"),
+                req("date", "markdown")));
         t.add(tool("list_deck_cards", "List all cards in a flashcard deck",
                 props("deckId", "The deck ID"), req("deckId")));
         t.add(tool("get_due_cards", "Get cards currently due for review in a deck",
@@ -431,6 +479,10 @@ public class ConverseResource {
                         "front", "Front (question) side",
                         "back", "Back (answer) side"),
                 req("deckId", "front", "back")));
+        t.add(tool("add_deck_cards", "Add multiple flashcards to a deck at once",
+                props("deckId", "The deck ID",
+                        "cards", "JSON array of cards, e.g. [{\"front\":\"Q\",\"back\":\"A\"}]"),
+                req("deckId", "cards")));
         t.add(tool("review_card", "Submit a review rating for a flashcard",
                 props("deckId", "The deck ID",
                         "cardId", "The card ID",
@@ -556,12 +608,66 @@ public class ConverseResource {
                     if (p.containsKey("parentPageId")) body.put("parentPageId", p.get("parentPageId"));
                     if (p.containsKey("ownerType")) body.put("ownerType", p.get("ownerType"));
                     if (p.containsKey("ownerId")) body.put("ownerId", p.get("ownerId"));
-                    yield post("/api/pages", body);
+                    String created = post("/api/pages", body);
+                    if (p.containsKey("content") && !p.get("content").isBlank()) {
+                        String id = MAPPER.readTree(created).path("id").asText(null);
+                        if (id != null) {
+                            yield patch("/api/pages/" + id, Map.of("content", mdDoc(p.get("content"))));
+                        }
+                    }
+                    yield created;
                 }
                 case "update_page" -> {
                     Map<String, Object> body = new LinkedHashMap<>();
                     if (p.containsKey("title")) body.put("title", p.get("title"));
                     yield patch("/api/pages/" + p.get("id"), body);
+                }
+                case "set_page_content" ->
+                        patch("/api/pages/" + p.get("id"),
+                                Map.of("content", mdDoc(p.get("markdown"))));
+                case "append_page_content" -> {
+                    JsonNode existing = MAPPER.readTree(get("/api/pages/" + p.get("id"), Map.of())).get("content");
+                    yield patch("/api/pages/" + p.get("id"),
+                            Map.of("content", appendToDoc(existing, p.get("markdown"))));
+                }
+
+                // Thoughts
+                case "list_thoughts" -> {
+                    Map<String, String> q = new LinkedHashMap<>();
+                    if (p.containsKey("kind")) q.put("kind", p.get("kind"));
+                    if (p.containsKey("parentThoughtId")) q.put("parentThoughtId", p.get("parentThoughtId"));
+                    yield get("/api/thoughts", q);
+                }
+                case "get_thought" -> get("/api/thoughts/" + p.get("id"), Map.of());
+                case "search_thoughts" -> get("/api/thoughts/search", Map.of("q", p.get("q")));
+                case "create_thought" -> {
+                    Map<String, Object> body = new LinkedHashMap<>();
+                    if (p.containsKey("title")) body.put("title", p.get("title"));
+                    if (p.containsKey("kind")) body.put("kind", p.get("kind"));
+                    if (p.containsKey("parentThoughtId")) body.put("parentThoughtId", p.get("parentThoughtId"));
+                    String created = post("/api/thoughts", body);
+                    if (p.containsKey("content") && !p.get("content").isBlank()) {
+                        String id = MAPPER.readTree(created).path("id").asText(null);
+                        if (id != null) {
+                            yield patch("/api/thoughts/" + id, Map.of("content", mdDoc(p.get("content"))));
+                        }
+                    }
+                    yield created;
+                }
+                case "update_thought" -> {
+                    Map<String, Object> body = new LinkedHashMap<>();
+                    if (p.containsKey("title")) body.put("title", p.get("title"));
+                    if (p.containsKey("content") && !p.get("content").isBlank())
+                        body.put("content", mdDoc(p.get("content")));
+                    yield patch("/api/thoughts/" + p.get("id"), body);
+                }
+                case "set_thought_content" ->
+                        patch("/api/thoughts/" + p.get("id"),
+                                Map.of("content", mdDoc(p.get("markdown"))));
+                case "append_thought_content" -> {
+                    JsonNode existing = MAPPER.readTree(get("/api/thoughts/" + p.get("id"), Map.of())).get("content");
+                    yield patch("/api/thoughts/" + p.get("id"),
+                            Map.of("content", appendToDoc(existing, p.get("markdown"))));
                 }
 
                 // Habits
@@ -636,6 +742,21 @@ public class ConverseResource {
                 case "create_deck" -> post("/api/decks", Map.of("name", p.get("name")));
                 case "add_deck_card" -> post("/api/decks/" + p.get("deckId") + "/cards",
                         Map.of("front", p.get("front"), "back", p.get("back")));
+                case "add_deck_cards" -> {
+                    JsonNode cards = MAPPER.readTree(p.get("cards"));
+                    List<Object> results = new ArrayList<>();
+                    if (cards.isArray()) {
+                        for (JsonNode c : cards) {
+                            String front = c.path("front").asText("");
+                            String back = c.path("back").asText("");
+                            if (front.isBlank() || back.isBlank()) continue;
+                            String r = post("/api/decks/" + p.get("deckId") + "/cards",
+                                    Map.of("front", front, "back", back));
+                            results.add(MAPPER.readTree(r));
+                        }
+                    }
+                    yield MAPPER.writeValueAsString(Map.of("created", results.size(), "cards", results));
+                }
                 case "review_card" -> post(
                         "/api/decks/" + p.get("deckId") + "/cards/" + p.get("cardId") + "/review",
                         Map.of("rating", p.get("rating")));
@@ -645,6 +766,21 @@ public class ConverseResource {
                         Map.of("from", p.get("from"), "to", p.get("to")));
                 case "search_daily_notes" -> get("/api/daily-notes/search",
                         Map.of("q", p.get("query")));
+                case "get_daily_note" -> get("/api/daily-notes/" + p.get("date"), Map.of());
+                case "set_daily_note" -> {
+                    String docString = MAPPER.writeValueAsString(mdDoc(p.get("markdown")));
+                    yield put("/api/daily-notes/" + p.get("date"), Map.of("content", docString));
+                }
+                case "append_daily_note" -> {
+                    String existing = null;
+                    try {
+                        JsonNode note = MAPPER.readTree(get("/api/daily-notes/" + p.get("date"), Map.of()));
+                        if (note.has("content") && !note.get("content").isNull())
+                            existing = note.get("content").asText(); // stored as a JSON string
+                    } catch (Exception ignored) { /* 404 / no note yet -> start fresh */ }
+                    String merged = appendToDocString(existing, p.get("markdown"));
+                    yield put("/api/daily-notes/" + p.get("date"), Map.of("content", merged));
+                }
 
                 default -> "{\"error\":\"Unknown tool: " + name + "\"}";
             };
@@ -692,6 +828,18 @@ public class ConverseResource {
                 .header("Content-Type", "application/json")
                 .header("X-API-Key", authConfig.getApiKey())
                 .method("PATCH", HttpRequest.BodyPublishers.ofString(json))
+                .build();
+        return httpClient().send(req, HttpResponse.BodyHandlers.ofString()).body();
+    }
+
+    private String put(String path, Map<String, Object> body) throws Exception {
+        String url = "http://localhost:" + serverPort + path;
+        String json = MAPPER.writeValueAsString(body);
+        HttpRequest req = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .header("Content-Type", "application/json")
+                .header("X-API-Key", authConfig.getApiKey())
+                .PUT(HttpRequest.BodyPublishers.ofString(json))
                 .build();
         return httpClient().send(req, HttpResponse.BodyHandlers.ofString()).body();
     }
@@ -749,6 +897,44 @@ public class ConverseResource {
             case BOOLEAN -> Document.fromBoolean(node.asBoolean());
             default -> Document.fromNull();
         };
+    }
+
+    // ── Markdown / body helpers ───────────────────────────────────────────────
+
+    /** Markdown -> TipTap doc object node (delegates to the converter). */
+    private com.fasterxml.jackson.databind.node.ObjectNode mdDoc(String markdown) {
+        return app.service.MarkdownToTipTap.toDoc(markdown);
+    }
+
+    /**
+     * Deep-copy the existing TipTap doc (or build an empty one if missing/invalid), append
+     * the block nodes produced from {@code markdown}, and return the merged doc.
+     */
+    private com.fasterxml.jackson.databind.JsonNode appendToDoc(
+            com.fasterxml.jackson.databind.JsonNode existingContent, String markdown) {
+        com.fasterxml.jackson.databind.node.ObjectNode doc;
+        if (existingContent != null && existingContent.isObject()
+                && existingContent.has("content") && existingContent.get("content").isArray()) {
+            doc = (com.fasterxml.jackson.databind.node.ObjectNode) existingContent.deepCopy();
+        } else {
+            doc = MAPPER.createObjectNode();
+            doc.put("type", "doc");
+            doc.putArray("content");
+        }
+        com.fasterxml.jackson.databind.node.ArrayNode arr =
+                (com.fasterxml.jackson.databind.node.ArrayNode) doc.get("content");
+        com.fasterxml.jackson.databind.JsonNode added = app.service.MarkdownToTipTap.toDoc(markdown).get("content");
+        if (added != null && added.isArray()) added.forEach(arr::add);
+        return doc;
+    }
+
+    /** Daily-note content arrives as a JSON string; returns the merged doc as a string. */
+    private String appendToDocString(String existingContentString, String markdown) throws Exception {
+        com.fasterxml.jackson.databind.JsonNode existing = null;
+        if (existingContentString != null && !existingContentString.isBlank()) {
+            try { existing = MAPPER.readTree(existingContentString); } catch (Exception ignored) {}
+        }
+        return MAPPER.writeValueAsString(appendToDoc(existing, markdown));
     }
 
     // ── Existing helpers ──────────────────────────────────────────────────────
